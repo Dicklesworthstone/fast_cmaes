@@ -1,0 +1,35 @@
+[build-system]
+requires = ["maturin>=1.6,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "fastcma"
+version = "0.1.0"
+description = "Hyper-optimized CMA-ES core in Rust with a Python interface"
+requires-python = ">=3.9"
+readme = "README.md"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Rust",
+]
+dependencies = [
+  "python-decouple>=3.8",
+]
+
+[project.urls]
+Homepage = "https://github.com/Dicklesworthstone/fast_cmaes"
+Repository = "https://github.com/Dicklesworthstone/fast_cmaes"
+
+[project.optional-dependencies]
+numpy = ["numpy>=1.26"]
+demo = ["rich>=13.7"]
+
+[tool.maturin]
+features = ["pyo3/extension-module"]
+strip = true
+python-source = "python"
