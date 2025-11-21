@@ -33,6 +33,8 @@ uv pip install --upgrade pip
 uv pip install maturin rich python-decouple
 
 echo "[5/5] Building wheel (maturin build --release)..."
+# Clean old wheels to avoid pip resolver conflicts when versions change
+rm -f dist/*.whl 2>/dev/null || true
 uv run maturin build --release --out dist
 echo "Installing built wheel..."
 uv run python -m pip install dist/*.whl
