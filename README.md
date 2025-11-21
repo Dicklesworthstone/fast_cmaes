@@ -94,6 +94,11 @@ maturin develop --release --features eigen_lapack
 python -m pip install .[demo]
 ```
 
+One-liner setup + Rich TUI demo (auto-installs nightly Rust, uv, venv, builds, runs):
+```bash
+./scripts/setup_and_demo.sh
+```
+
 ## Quickstart (Python)
 ```python
 from fastcma import fmin

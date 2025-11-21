@@ -20,8 +20,9 @@ rustup override set nightly >/dev/null 2>&1
 
 echo "[2/5] Ensuring uv is available..."
 if ! command -v uv >/dev/null 2>&1; then
-  echo "uv not found. Install from https://github.com/astral-sh/uv/releases and re-run." >&2
-  exit 1
+  echo "uv not found. Installing uv..."
+  curl -LsSf https://astral.sh/uv/install.sh | sh
+  export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$PATH"
 fi
 
 echo "[3/5] Creating Python 3.13 venv with uv..."
@@ -29,11 +30,26 @@ uv venv --clear --python 3.13 .venv
 
 echo "[4/5] Installing build/deps (maturin + demo extras) ..."
 uv pip install --upgrade pip
-uv pip install maturin
-uv pip install .[demo]
+uv pip install maturin rich python-decouple
 
-echo "[5/5] Building extension (maturin develop --release)..."
-uv run maturin develop --release
+echo "[5/5] Building wheel (maturin build --release)..."
+uv run maturin build --release --out dist
+echo "Installing built wheel..."
+uv run python -m pip install dist/*.whl
+
+# Some installers leave only an editable .pth; ensure the extension files are present on sys.path.
+export WHEEL_PATH=$(ls dist/*.whl | head -n1)
+uv run env WHEEL_PATH="$WHEEL_PATH" python - <<'PY'
+import sys, os, zipfile
+wheel = os.environ["WHEEL_PATH"]
+site = next(p for p in sys.path if "site-packages" in p)
+with zipfile.ZipFile(wheel) as z:
+    z.extractall(site)
+print("Extracted wheel contents to", site)
+PY
+
+# Ensure the freshly built native module is on PYTHONPATH (works even if pip left an editable .pth)
+export PYTHONPATH="$PROJECT_ROOT/target/release:$PROJECT_ROOT/python:${PYTHONPATH:-}"
 
 echo "Running Rich TUI demo..."
-uv run python examples/rich_tui_demo.py
+uv run env PYTHONPATH="$PYTHONPATH" python examples/rich_tui_demo.py
