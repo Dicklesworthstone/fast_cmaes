@@ -9,7 +9,22 @@ on:
   workflow_dispatch:
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Rust (nightly for portable_simd)
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: nightly
+          override: true
+      - name: Run cargo test (all features)
+        run: |
+          cargo test --all-features
+
   build:
+    needs: test
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -43,8 +58,11 @@ jobs:
         run: ls dist
 
       - name: Install wheel and run Python smoke test
+        shell: bash
         run: |
-          pip install dist/*.whl
+          set -e
+          WHEEL=$(ls dist/*.whl | head -n1)
+          python -m pip install "$WHEEL"
           python -m pip install numpy || true  # optional dependency for local import
           python tests/python_smoke.py
 
