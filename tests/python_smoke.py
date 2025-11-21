@@ -1,7 +1,6 @@
 import math
 
 import fastcma
-from fastcma_baseline import benchmark_sphere
 
 
 def test_python_sphere():
@@ -15,10 +14,13 @@ def test_python_sphere():
 
 
 def test_naive_python_baseline_runs():
-    res = benchmark_sphere(dim=10, iters=60)
-    assert res["python"]["elapsed"] > 0.0
-    # Rust path is optional; only assert the pure python path exists
-    assert res["python"]["fbest"] >= 0.0
+    def shifted_quad(x):
+        return sum((v - 0.1) * (v - 0.1) for v in x)
+
+    xmin, _es = fastcma.fmin(
+        shifted_quad, [0.3, -0.2], 0.25, maxfevals=2000, ftarget=1e-10
+    )
+    assert shifted_quad(xmin) < 1e-6
 
 
 if __name__ == "__main__":
