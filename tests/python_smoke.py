@@ -2,7 +2,8 @@ import math
 
 
 def test_python_sphere():
-    import fastcma
+import fastcma
+from fastcma_baseline import benchmark_sphere
 
     def sphere(x):
         return sum(v * v for v in x)

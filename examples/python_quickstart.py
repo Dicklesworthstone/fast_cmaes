@@ -10,6 +10,7 @@ import math
 from pprint import pprint
 
 import fastcma
+from fastcma_baseline import benchmark_sphere
 
 
 def sphere(x):
@@ -23,7 +24,7 @@ def main():
     print("f(xmin) =", sphere(xmin))
 
     # Pure-Python baseline for comparison
-    baseline = fastcma.benchmark_sphere(dim=10, iters=80)
+    baseline = benchmark_sphere(dim=10, iters=80)
     print("\nPure-Python baseline vs Rust:")
     pprint(baseline)
 

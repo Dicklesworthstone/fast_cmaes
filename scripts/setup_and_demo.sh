@@ -25,7 +25,7 @@ if ! command -v uv >/dev/null 2>&1; then
 fi
 
 echo "[3/5] Creating Python 3.13 venv with uv..."
-uv venv --python 3.13 .venv
+uv venv --clear --python 3.13 .venv
 
 echo "[4/5] Installing build/deps (maturin + demo extras) ..."
 uv pip install --upgrade pip

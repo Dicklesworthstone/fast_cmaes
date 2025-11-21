@@ -2,7 +2,7 @@
 
 from pprint import pprint
 
-from fastcma import benchmark_sphere, cma_es
+from fastcma_baseline import benchmark_sphere, cma_es
 
 
 def rastrigin(x):

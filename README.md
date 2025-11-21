@@ -93,12 +93,16 @@ python -m pip install .[demo]
 ## Quickstart (Python)
 ```python
 from fastcma import fmin
+from fastcma_baseline import benchmark_sphere
 
 def sphere(x):
     return sum(v*v for v in x)
 
 xmin, es = fmin(sphere, [0.5, -0.2, 0.8], sigma=0.3, maxfevals=4000, ftarget=1e-12)
 print("xmin", xmin)
+
+# Pure-Python baseline
+print(benchmark_sphere(dim=20, iters=120))
 ```
 
 ## Vectorized & Constraints
@@ -155,7 +159,7 @@ uv run python examples/rich_tui_demo.py
 ```
 
 ## Baselines & benchmarks
-- Pure Python baseline: `fastcma.cma_es`, `fastcma.benchmark_sphere` (see `python/naive_cma.py`).
+- Pure Python baseline: `fastcma_baseline.cma_es`, `fastcma_baseline.benchmark_sphere` (see `python/fastcma_baseline/naive_cma.py`).
 - Integration benchmarks (fixed seeds): sphere, Rosenbrock, Rastrigin, Ackley, Schwefel, Griewank in `tests/benchmarks.rs`.
 - Rich TUI demo for live insight.
 
