@@ -2,7 +2,8 @@
 
 [![CI](https://github.com/Dicklesworthstone/fast_cmaes/actions/workflows/build-wheels.yml/badge.svg)](https://github.com/Dicklesworthstone/fast_cmaes/actions/workflows/build-wheels.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](#license)
-[![Python](https://img.shields.io/badge/Python-3.9%20--%203.12-blue)](#installation-python)
+[![PyPI](https://img.shields.io/pypi/v/fast-cmaes.svg)](https://pypi.org/project/fast-cmaes/)
+[![Python](https://img.shields.io/badge/Python-3.9%20--%203.14-blue)](#installation-python)
 [![Rust](https://img.shields.io/badge/Rust-nightly-orange)](#rust-usage-library)
 
 Hyper-optimized CMA-ES in Rust with a first-class Python experience. SIMD, rayon, deterministic seeds, vectorized objectives, restarts, constraints, and a Rich-powered TUI — all while keeping the Rust core available for native use. Published to PyPI as `fast-cmaes` (module name: `fastcma`).
@@ -73,17 +74,20 @@ flowchart LR
 - **Cross-platform wheels**: CI builds for Linux/macOS/Windows, Python 3.9–3.12.
 
 ## Installation (Python)
+Fastest path (PyPI):
 ```bash
-python -m pip install fast-cmaes        # from PyPI (installs module `fastcma`)
+python -m pip install fast-cmaes  # installs module `fastcma`
+```
 
-# or build locally
+Build locally (needed only if hacking on Rust):
+```bash
 python -m pip install maturin
 maturin develop --release
 
 # Optional: NumPy fast paths
 maturin develop --release --features numpy_support
 
-# Optional: LAPACK eigen backend
+# Optional: LAPACK eigen backend (requires a Fortran toolchain)
 maturin develop --release --features eigen_lapack
 
 # Demo extras (Rich TUI)
