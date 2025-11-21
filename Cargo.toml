@@ -1,6 +1,6 @@
 [package]
 name = "fastcma"
-version = "0.1.0"
+version = "0.1.2"
 edition = "2021"
 
 [lib]
@@ -12,7 +12,7 @@ pyo3 = { version = "0.22", features = ["extension-module"] }
 rand = "0.8"
 rand_distr = "0.4"
 rayon = "1.10"
-nalgebra = "0.32"
+nalgebra = "0.31"
 nalgebra-lapack = { version = "0.22", optional = true }
 numpy = { version = "0.22", optional = true }
 
