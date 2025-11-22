@@ -34,7 +34,6 @@ Published to PyPI as [`fast-cmaes`](https://pypi.org/project/fast-cmaes/) (modul
 - [Performance](#-performance-considerations)
 - [Feature Flags](#-feature-flags)
 - [Testing](#-testing)
-- [Contributing](#-contributing)
 - [License](#-license)
 
 ## 🎯 Why CMA-ES
@@ -145,17 +144,29 @@ flowchart TD
 **Mathematical Formulation:**
 
 - **`ask()`**: Generates $$\lambda$$ candidate solutions by sampling:
-  $$x_i \sim \mathcal{N}(\mathbf{x}_{\text{mean}}, \sigma^2 \mathbf{C})$$
+  
+  $$x_i \sim \mathcal{N}(\mathbf{x}_{\mathrm{mean}}, \sigma^2 \mathbf{C})$$
   
   where $$\mathbf{C}$$ is the covariance matrix and $$\sigma$$ is the step size.
 
 - **`tell()`**: Updates distribution parameters:
-  - **Weighted mean**: $$\mathbf{x}_{\text{mean}} \leftarrow \sum_{i=1}^{\mu} w_i \mathbf{x}_{i:\lambda}$$
+  - **Weighted mean**: 
+    
+    $$\mathbf{x}_{\mathrm{mean}} \leftarrow \sum_{i=1}^{\mu} w_i \mathbf{x}_{i:\lambda}$$
+  
   - **Evolution paths**: 
-    - $$\mathbf{p}_c \leftarrow (1-c_c)\mathbf{p}_c + c_c h_\sigma \frac{\mathbf{x}_{\text{mean}} - \mathbf{x}_{\text{old}}}{\sigma}$$
-    - $$\mathbf{p}_\sigma \leftarrow (1-c_\sigma)\mathbf{p}_\sigma + c_\sigma \frac{\mathbf{C}^{-1/2}(\mathbf{x}_{\text{mean}} - \mathbf{x}_{\text{old}})}{\sigma}$$
-  - **Covariance update**: $$\mathbf{C} \leftarrow (1-c_1-c_\mu)\mathbf{C} + c_1 \mathbf{p}_c \mathbf{p}_c^T + c_\mu \sum_{i=1}^{\mu} w_i \mathbf{y}_{i:\lambda} \mathbf{y}_{i:\lambda}^T$$
-  - **Step size adaptation**: $$\sigma \leftarrow \sigma \exp\left(\frac{c_\sigma}{d_\sigma}\left(\frac{\|\mathbf{p}_\sigma\|}{\mathbb{E}\|\mathcal{N}(\mathbf{0},\mathbf{I})\|} - 1\right)\right)$$
+    
+    $$\mathbf{p}_c \leftarrow (1-c_c)\mathbf{p}_c + c_c h_{\sigma} \frac{\mathbf{x}_{\mathrm{mean}} - \mathbf{x}_{\mathrm{old}}}{\sigma}$$
+    
+    $$\mathbf{p}_{\sigma} \leftarrow (1-c_{\sigma})\mathbf{p}_{\sigma} + c_{\sigma} \frac{\mathbf{C}^{-1/2}(\mathbf{x}_{\mathrm{mean}} - \mathbf{x}_{\mathrm{old}})}{\sigma}$$
+  
+  - **Covariance update**: 
+    
+    $$\mathbf{C} \leftarrow (1-c_1-c_{\mu})\mathbf{C} + c_1 \mathbf{p}_c \mathbf{p}_c^T + c_{\mu} \sum_{i=1}^{\mu} w_i \mathbf{y}_{i:\lambda} \mathbf{y}_{i:\lambda}^T$$
+  
+  - **Step size adaptation**: 
+    
+    $$\sigma \leftarrow \sigma \exp\left(\frac{c_{\sigma}}{d_{\sigma}}\left(\frac{\|\mathbf{p}_{\sigma}\|}{\mathbb{E}\|\mathcal{N}(\mathbf{0},\mathbf{I})\|} - 1\right)\right)$$
 
 **2. Covariance Representation (`CovarianceMode`)**
 
@@ -203,7 +214,7 @@ Diagonal covariance takes a pragmatic approach, storing only the $$n$$ diagonal 
 
 The covariance matrix evolves through a combination of rank-one and rank-μ updates:
 
-$$\mathbf{C} \leftarrow (1-c_1-c_\mu)\mathbf{C} + c_1 \mathbf{p}_c \mathbf{p}_c^T + c_\mu \sum_{i=1}^{\mu} w_i \mathbf{y}_{i:\lambda} \mathbf{y}_{i:\lambda}^T$$
+$$\mathbf{C} \leftarrow (1-c_1-c_{\mu})\mathbf{C} + c_1 \mathbf{p}_c \mathbf{p}_c^T + c_{\mu} \sum_{i=1}^{\mu} w_i \mathbf{y}_{i:\lambda} \mathbf{y}_{i:\lambda}^T$$
 
 The first term decays the current covariance, preventing it from growing unbounded. The second term incorporates the evolution path $$\mathbf{p}_c$$, capturing the direction of recent successful steps. The third term aggregates information from the current population, with weights $$w_i$$ emphasizing better solutions. This dual mechanism combines short-term momentum (evolution path) with long-term learning (population statistics), enabling robust adaptation to diverse problem landscapes.
 
@@ -257,19 +268,19 @@ fn dot_simd(a: &[f64], b: &[f64]) -> f64
 
 The most expensive operation ($$O(n^3)$$ eigen decomposition) is deferred using an adaptive gap:
 
-$$\text{lazy\_gap\_evals} = \frac{0.5 \cdot n \cdot \lambda}{(c_1 + c_\mu) \cdot n^2}$$
+$$\mathrm{lazy\_gap\_evals} = \frac{0.5 \cdot n \cdot \lambda}{(c_1 + c_{\mu}) \cdot n^2}$$
 
 ```mermaid
 flowchart TD
-    AskCall[ask called] --> CheckGap{current_eval > updated_eval + gap?}
-    CheckGap -->|No| UseCache[Use cached eigenbasis]
-    CheckGap -->|Yes| EnforceSym[Enforce symmetry A = A + A^T / 2]
-    EnforceSym --> EigenDecomp[Eigen decomposition O n³]
-    EigenDecomp --> FloorEigs[Floor eigenvalues to 1e-20]
-    FloorEigs --> ComputeInvSqrt[Compute C^-1/2]
-    ComputeInvSqrt --> UpdateCache[Update cached eigenbasis]
+    AskCall["ask called"] --> CheckGap{"current_eval > updated_eval + gap?"}
+    CheckGap -->|No| UseCache["Use cached eigenbasis"]
+    CheckGap -->|Yes| EnforceSym["Enforce symmetry A = (A + A^T) / 2"]
+    EnforceSym --> EigenDecomp["Eigen decomposition O(n³)"]
+    EigenDecomp --> FloorEigs["Floor eigenvalues to 1e-20"]
+    FloorEigs --> ComputeInvSqrt["Compute C^(-1/2)"]
+    ComputeInvSqrt --> UpdateCache["Update cached eigenbasis"]
     UpdateCache --> UseCache
-    UseCache --> Sample[Sample candidates]
+    UseCache --> Sample["Sample candidates"]
     
     classDef decisionStyle fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#fff
     classDef computeStyle fill:#3b82f6,stroke:#1e40af,stroke-width:2px,color:#fff
@@ -280,7 +291,7 @@ flowchart TD
     class UseCache,Sample cacheStyle
 ```
 
-- Eigensystem only recomputed when $$\text{current\_eval} > \text{updated\_eval} + \text{lazy\_gap\_evals}$$
+- Eigensystem only recomputed when $$\mathrm{current\_eval} > \mathrm{updated\_eval} + \mathrm{lazy\_gap\_evals}$$
 - Gap grows with dimension and learning rates, naturally reducing update frequency
 - Covariance matrix updates continue (cheap rank-one/rank-μ), but sampling uses cached eigenbasis
 - **Impact**: Reduces eigen decompositions by 5-10x in typical runs, critical for high-dimensional problems
@@ -387,10 +398,13 @@ flowchart TD
 **Stages:**
 
 1. **Box projection** (SIMD-accelerated): Clamps to $$[\mathbf{lb}, \mathbf{ub}]$$ bounds
+   
    $$x_i \leftarrow \max(\min(x_i, ub_i), lb_i)$$
 
 2. **Mirroring** (optional): Reflects out-of-bounds points into feasible region
-   $$x_i \leftarrow \begin{cases} lb_i + |x_i - lb_i| \bmod (2w_i) & \text{if } |x_i - lb_i| \bmod (2w_i) \leq w_i \\ ub_i - (|x_i - lb_i| \bmod (2w_i) - w_i) & \text{otherwise} \end{cases}$$
+   
+   $$x_i \leftarrow \begin{cases} lb_i + |x_i - lb_i| \bmod (2w_i) & \mathrm{if\ } |x_i - lb_i| \bmod (2w_i) \leq w_i \\ ub_i - (|x_i - lb_i| \bmod (2w_i) - w_i) & \mathrm{otherwise} \end{cases}$$
+   
    where $$w_i = ub_i - lb_i$$
 
 3. **Rejection/resampling**: Up to `max_resamples` attempts if `reject()` predicate fails
@@ -398,7 +412,8 @@ flowchart TD
 4. **Repair** (optional): User-provided function to fix infeasible points
 
 5. **Penalty** (optional): Adds penalty to fitness for remaining violations
-   $$f_{\text{penalized}} = f(\mathbf{x}) + \text{penalty}(\mathbf{x})$$
+   
+   $$f_{\mathrm{penalized}} = f(\mathbf{x}) + \mathrm{penalty}(\mathbf{x})$$
 
 - **Why**: Flexible constraint handling accommodates diverse problem types
 - **Impact**: Works with box constraints, nonlinear constraints (via penalty), and custom feasibility rules
@@ -715,10 +730,10 @@ Performance optimization in fastcma follows a philosophy of targeted improvement
 - **Best for**: Expensive objective functions that can be evaluated independently
 
 **3. Lazy Eigensystem Updates**
-- **Strategy**: Defer expensive `O(n³)` eigen decomposition until necessary
-- **Gap calculation**: `lazy_gap_evals = 0.5 * n * λ / (c1 + cμ) / n²`
+- **Strategy**: Defer expensive $$O(n^3)$$ eigen decomposition until necessary
+- **Gap calculation**: $$\mathrm{lazy\_gap\_evals} = \frac{0.5 \cdot n \cdot \lambda}{(c_1 + c_{\mu}) \cdot n^2}$$
 - **Impact**: Reduces eigen decompositions by 5-10x in typical runs
-- **Critical for**: High-dimensional problems (n > 20) where eigen decomposition dominates
+- **Critical for**: High-dimensional problems ($$n > 20$$) where eigen decomposition dominates
 
 **4. Diagonal Covariance Mode**
 - **When to use**: High dimensions (n > 50) or separable problems
@@ -777,16 +792,16 @@ Performance optimization in fastcma follows a philosophy of targeted improvement
 
 ### Setup Script (`scripts/setup_and_demo.sh`)
 
-The setup script embodies the project's commitment to developer experience. Rather than requiring contributors to navigate complex build requirements manually, a single command handles everything from Rust toolchain installation to running the demo. The script follows a fail-fast philosophy, checking prerequisites early and providing clear error messages when requirements aren't met.
+The setup script embodies the project's commitment to user experience. Rather than requiring users to navigate complex build requirements manually, a single command handles everything from Rust toolchain installation to running the demo. The script follows a fail-fast philosophy, checking prerequisites early and providing clear error messages when requirements aren't met.
 
-The automation covers the complete development workflow: verifying Rust nightly (required for SIMD features), installing the modern `uv` package manager, creating an isolated Python 3.13 virtual environment, installing build dependencies, compiling the Rust extension, and finally launching the Rich TUI demo. This eliminates the common friction of "getting started" that often discourages potential contributors.
+The automation covers the complete workflow: verifying Rust nightly (required for SIMD features), installing the modern `uv` package manager, creating an isolated Python 3.13 virtual environment, installing build dependencies, compiling the Rust extension, and finally launching the Rich TUI demo. This eliminates the common friction of "getting started" that can make the project difficult to use.
 
 **Usage**:
 ```bash
 ./scripts/setup_and_demo.sh
 ```
 
-The script is idempotent and handles partial installations gracefully, making it safe to run multiple times. It's designed for both new contributors exploring the codebase and experienced developers who want a quick local demo without manual setup steps.
+The script is idempotent and handles partial installations gracefully, making it safe to run multiple times. It's designed for users who want to explore the codebase or run a quick local demo without manual setup steps.
 
 ## 🧪 Test Suite
 
@@ -956,7 +971,7 @@ The hard suite expands testing to twenty functions that stress-test the optimize
 | **Powell** | Quartic narrow valleys | High | Non-separable |
 | **Styblinski-Tang** | Multiple local minima | Moderate | Separable |
 | **Bent Cigar** | Extreme ill-conditioning | $$10^6$$ | Separable |
-| **Elliptic** | Exponentially increasing | $$10^{6(n-1)/(n-1)}$$ | Separable |
+| **Elliptic** | Exponentially increasing | $$10^{6(i-1)/(n-1)}$$ for dimension $$i$$ | Separable |
 | **Schwefel 1.2** | Quadratic interactions | Moderate | Non-separable |
 | **Schwefel 2.22** | Non-differentiable | Low | Separable |
 
@@ -1171,11 +1186,6 @@ flowchart TD
 - **Timing logs**: Captured for benchmarks and uploaded as artifacts
 - **Regression detection**: Timing comparisons across runs
 - **Performance tracking**: Monitor optimization speed over time
-
-## 🤝 Contributing
-
-- 🦀 **Nightly Rust required** (see `rust-toolchain.toml`)
-- 📝 Please include failing cases or performance comparisons in issues/PRs
 
 ---
 
