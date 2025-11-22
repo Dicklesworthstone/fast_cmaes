@@ -172,6 +172,7 @@ uv run python examples/rich_tui_demo.py
 - Pure Python baseline: `fastcma_baseline.cma_es`, `fastcma_baseline.benchmark_sphere` (see `python/fastcma_baseline/naive_cma.py`).
 - Integration benchmarks (fixed seeds): sphere, Rosenbrock, Rastrigin, Ackley, Schwefel, Griewank in `tests/benchmarks.rs`.
 - Hard-suite (20 classic tough functions, seeded, higher dims): Zakharov, Levy, Dixon-Price, Powell, Styblinski–Tang, Bohachevsky, Bukin6, Dropwave, Alpine N.1, Elliptic, Salomon, Quartic, Schwefel 1.2/2.22, Bent Cigar, Rastrigin 10D, Ackley 10D, Griewank 10D, Rosenbrock 6D, Sum Squares 12D in `tests/hard_benchmarks.rs`.
+- Very-hard (ignored by default, ~20 more high-dim/fractal/ill-conditioned cases such as Katsuura, Weierstrass, Schwefel 2.26 @ 30D, HappyCat/HGBat, Expanded Schaffer F6/F7, Discus, Different Powers, 30D Rastrigin/Ackley/Rosenbrock/Griewank/Elliptic) in the same file; run with `cargo test --test hard_benchmarks -- --ignored`.
 - Rich TUI demo for live insight.
 
 ## Performance considerations
@@ -189,7 +190,9 @@ uv run python examples/rich_tui_demo.py
 
 ## Testing
 - Rust quick suite: `cargo test`
-- Extended hard benchmarks (20 classic functions incl. high-dim Rastrigin/Ackley/Styblinski–Tang, Bukin6, Dropwave, Powell, Dixon-Price, Levy, Zakharov, Alpine N.1, Bent Cigar, Salomon, etc.): `cargo test --test hard_benchmarks` (takes ~90s)
+- Extended hard benchmarks (20 classic functions): `cargo test --test hard_benchmarks` (takes ~90s)
+- Very-hard (ignored) suite (high-dim/fractal/ill-conditioned, +~20 cases): `cargo test --test hard_benchmarks -- --ignored`
+- CI runs the core suite on every push/PR and executes the ignored very-hard suite on GitHub Actions workers (job: `very-hard`) so heavy compute stays off your local machine.
 - Python smoke (local wheel): `pytest tests/python_smoke.py`
 - CI: GitHub Actions builds wheels on nightly Rust; runs smoke tests; publishes to PyPI on tags when `PYPI_API_TOKEN` is set; PyPI smoke follows publish.
 
