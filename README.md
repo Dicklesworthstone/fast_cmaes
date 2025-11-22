@@ -132,16 +132,16 @@ flowchart TD
 
 - **`ask()`**: Generates $$\lambda$$ candidate solutions by sampling:
 
-  $$x_i \sim \mathcal{N}(\mathbf{x}_{\mathrm{mean}}, \sigma^2 \mathbf{C})$$
+  $$x_i \sim \mathcal{N}(\mathbf{x}\_{\mathrm{mean}}, \sigma^2 \mathbf{C})$$
 
-  **What this means:** We create new candidate solutions by drawing from a multivariate normal distribution centered at the current best estimate ($$\mathbf{x}_{\mathrm{mean}}$$), with spread controlled by the step size $$\sigma$$ and shape determined by the covariance matrix $$\mathbf{C}$$. Think of this as generating "guesses" around our current best point, where the covariance matrix learns the shape of the problem landscape.
+  **What this means:** We create new candidate solutions by drawing from a multivariate normal distribution centered at the current best estimate ($$\mathbf{x}\_{\mathrm{mean}}$$), with spread controlled by the step size $$\sigma$$ and shape determined by the covariance matrix $$\mathbf{C}$$. Think of this as generating "guesses" around our current best point, where the covariance matrix learns the shape of the problem landscape.
 
   **Why this matters:** Instead of randomly searching everywhere, CMA-ES learns the "direction" and "shape" of good solutions through the covariance matrix, making each generation of candidates smarter than the last.
 
 - **`tell()`**: Updates distribution parameters:
   - **Weighted mean**:
 
-    $$\mathbf{x}_{\mathrm{mean}} \leftarrow \sum_{i=1}^{\mu} w_i \mathbf{x}_{i:\lambda}$$
+    $$\mathbf{x}\_{\mathrm{mean}} \leftarrow \sum_{i=1}^{\mu} w_i \mathbf{x}\_{i:\lambda}$$
 
     **What this means:** We update our search center by taking a weighted average of the best $$\mu$$ solutions from the current generation. Better solutions get higher weights ($$w_i$$), so the center moves toward promising regions.
 
@@ -149,25 +149,25 @@ flowchart TD
 
   - **Evolution paths**:
 
-    $$\mathbf{p}_c \leftarrow (1-c_c)\mathbf{p}_c + c_c h_{\sigma} \frac{\mathbf{x}_{\mathrm{mean}} - \mathbf{x}_{\mathrm{old}}}{\sigma}$$
+    $$\mathbf{p}\_c \leftarrow (1-c_c)\mathbf{p}\_c + c_c h\_{\sigma} \frac{\mathbf{x}\_{\mathrm{mean}} - \mathbf{x}\_{\mathrm{old}}}{\sigma}$$
 
-    $$\mathbf{p}_{\sigma} \leftarrow (1-c_{\sigma})\mathbf{p}_{\sigma} + c_{\sigma} \frac{\mathbf{C}^{-1/2}(\mathbf{x}_{\mathrm{mean}} - \mathbf{x}_{\mathrm{old}})}{\sigma}$$
+    $$\mathbf{p}\_{\sigma} \leftarrow (1-c\_{\sigma})\mathbf{p}\_{\sigma} + c\_{\sigma} \frac{\mathbf{C}^{-1/2}(\mathbf{x}\_{\mathrm{mean}} - \mathbf{x}\_{\mathrm{old}})}{\sigma}$$
 
-    **What this means:** Evolution paths track the direction of recent progress. $$\mathbf{p}_c$$ remembers successful moves (for covariance adaptation), while $$\mathbf{p}_{\sigma}$$ monitors step size effectiveness. The $$h_{\sigma}$$ term prevents updates when steps are too small.
+    **What this means:** Evolution paths track the direction of recent progress. $$\mathbf{p}\_c$$ remembers successful moves (for covariance adaptation), while $$\mathbf{p}\_{\sigma}$$ monitors step size effectiveness. The $$h\_{\sigma}$$ term prevents updates when steps are too small.
 
     **Why this matters:** These "memory" vectors help the algorithm distinguish between random fluctuations and genuine progress, enabling smarter adaptation of both search direction and step size.
 
   - **Covariance update**:
 
-    $$\mathbf{C} \leftarrow (1-c_1-c_{\mu})\mathbf{C} + c_1 \mathbf{p}_c \mathbf{p}_c^T + c_{\mu} \sum_{i=1}^{\mu} w_i \mathbf{y}_{i:\lambda} \mathbf{y}_{i:\lambda}^T$$
+    $$\mathbf{C} \leftarrow (1-c_1-c\_{\mu})\mathbf{C} + c_1 \mathbf{p}\_c \mathbf{p}\_c^T + c\_{\mu} \sum_{i=1}^{\mu} w_i \mathbf{y}\_{i:\lambda} \mathbf{y}\_{i:\lambda}^T$$
 
-    **What this means:** The covariance matrix evolves through three parts: (1) gradual forgetting of old information, (2) learning from the evolution path direction, and (3) incorporating successful steps from the current population. $$\mathbf{y}_{i:\lambda}$$ are the steps taken relative to the mean.
+    **What this means:** The covariance matrix evolves through three parts: (1) gradual forgetting of old information, (2) learning from the evolution path direction, and (3) incorporating successful steps from the current population. $$\mathbf{y}\_{i:\lambda}$$ are the steps taken relative to the mean.
 
     **Why this matters:** This is how CMA-ES "learns" the shape of the problem. If good solutions consistently lie along certain directions, the covariance matrix stretches the search distribution in those directions.
 
   - **Step size adaptation**:
 
-    $$\sigma \leftarrow \sigma \exp\left(\frac{c_{\sigma}}{d_{\sigma}}\left(\frac{\|\mathbf{p}_{\sigma}\|}{\mathbb{E}[\|\mathcal{N}(\mathbf{0},\mathbf{I})\|]} - 1\right)\right)$$
+    $$\sigma \leftarrow \sigma \exp\left(\frac{c\_{\sigma}}{d\_{\sigma}}\left(\frac{\|\mathbf{p}\_{\sigma}\|}{\mathbb{E}[\|\mathcal{N}(\mathbf{0},\mathbf{I})\|]} - 1\right)\right)$$
 
     **What this means:** The step size increases when the evolution path is longer than expected (indicating good progress) and decreases when it's shorter (indicating stagnation). The expected length comes from a standard normal distribution.
 
@@ -180,7 +180,7 @@ Two modes optimize for different problem characteristics:
 ```mermaid
 flowchart TD
     Start([Mode Selection]) --> CheckDim{n < 50?}
-    CheckDim -->|Yes| Full["Full: n×n, O(n^3)"]
+    CheckDim -->|Yes| Full["Full: n×n, O(n^{3})"]
     CheckDim -->|No| Diag["Diagonal: n, O(n)"]
     
     Full --> FullUse["Correlations, curved valleys"]
@@ -197,16 +197,16 @@ flowchart TD
 
 **Mathematical Formulation:**
 
-The choice between full and diagonal covariance represents a fundamental trade-off between modeling accuracy and computational cost. Full covariance stores the complete $$n \times n$$ matrix $$\mathbf{C}$$, enabling adaptation to arbitrary search distributions and capturing correlations between variables. This comes at the cost of $$O(n^3)$$ eigen decomposition for sampling, making it best suited for low-to-medium dimensions where correlations significantly impact optimization.
+The choice between full and diagonal covariance represents a fundamental trade-off between modeling accuracy and computational cost. Full covariance stores the complete $$n \times n$$ matrix $$\mathbf{C}$$, enabling adaptation to arbitrary search distributions and capturing correlations between variables. This comes at the cost of $$O(n^{3})$$ eigen decomposition for sampling, making it best suited for low-to-medium dimensions where correlations significantly impact optimization.
 
-Diagonal covariance takes a pragmatic approach, storing only the $$n$$ diagonal elements and assuming variable independence. This reduces storage from $$O(n^2)$$ to $$O(n)$$ and eliminates the expensive eigen decomposition, trading correlation modeling for speed. The diagonal mode excels on separable problems where variables can be optimized independently, or in high dimensions where full covariance becomes computationally prohibitive.
+Diagonal covariance takes a pragmatic approach, storing only the $$n$$ diagonal elements and assuming variable independence. This reduces storage from $$O(n^{2})$$ to $$O(n)$$ and eliminates the expensive eigen decomposition, trading correlation modeling for speed. The diagonal mode excels on separable problems where variables can be optimized independently, or in high dimensions where full covariance becomes computationally prohibitive.
 
 **Covariance Mode Comparison:**
 
 | Aspect | Full Covariance | Diagonal Covariance |
 |--------|----------------|---------------------|
-| **Storage** | $$O(n^2)$$ | $$O(n)$$ |
-| **Sampling cost** | $$O(n^3)$$ eigen decomposition | $$O(n)$$ element-wise |
+| **Storage** | $$O(n^{2})$$ | $$O(n)$$ |
+| **Sampling cost** | $$O(n^{3})$$ eigen decomposition | $$O(n)$$ element-wise |
 | **Correlation modeling** | Captures all pairwise correlations | Assumes independence |
 | **Best for** | Low-medium dimensions (< 50), correlated variables | High dimensions (> 50), separable problems |
 | **Convergence quality** | Higher (adapts to problem structure) | Lower (but often sufficient) |
@@ -216,9 +216,9 @@ Diagonal covariance takes a pragmatic approach, storing only the $$n$$ diagonal 
 
 The covariance matrix evolves through a combination of rank-one and rank-μ updates:
 
-$$\mathbf{C} \leftarrow (1-c_1-c_{\mu})\mathbf{C} + c_1 \mathbf{p}_c \mathbf{p}_c^T + c_{\mu} \sum_{i=1}^{\mu} w_i \mathbf{y}_{i:\lambda} \mathbf{y}_{i:\lambda}^T$$
+$$\mathbf{C} \leftarrow (1-c_1-c\_{\mu})\mathbf{C} + c_1 \mathbf{p}\_c \mathbf{p}\_c^T + c\_{\mu} \sum_{i=1}^{\mu} w_i \mathbf{y}\_{i:\lambda} \mathbf{y}\_{i:\lambda}^T$$
 
-The first term decays the current covariance, preventing it from growing unbounded. The second term incorporates the evolution path $$\mathbf{p}_c$$, capturing the direction of recent successful steps. The third term aggregates information from the current population, with weights $$w_i$$ emphasizing better solutions. This dual mechanism combines short-term momentum (evolution path) with long-term learning (population statistics), enabling robust adaptation to diverse problem landscapes.
+The first term decays the current covariance, preventing it from growing unbounded. The second term incorporates the evolution path $$\mathbf{p}\_c$$, capturing the direction of recent successful steps. The third term aggregates information from the current population, with weights $$w_i$$ emphasizing better solutions. This dual mechanism combines short-term momentum (evolution path) with long-term learning (population statistics), enabling robust adaptation to diverse problem landscapes.
 
 **3. Parameter Adaptation**
 - **Cumulative step-size adaptation**: Evolution path `ps` tracks the direction of recent steps, enabling faster convergence along favorable directions
@@ -262,11 +262,11 @@ fn dot_simd(a: &[f64], b: &[f64]) -> f64
 
 **2. Lazy Eigensystem Updates**
 
-The most expensive operation ($$O(n^3)$$ eigen decomposition) is deferred using an adaptive gap:
+The most expensive operation ($$O(n^{3})$$ eigen decomposition) is deferred using an adaptive gap:
 
-$$\mathrm{lazy\_gap\_evals} = \frac{0.5 \cdot n \cdot \lambda}{(c_1 + c_{\mu}) \cdot n^2}$$
+$$\mathrm{lazy\_gap\_evals} = \frac{0.5 \cdot n \cdot \lambda}{(c_1 + c\_{\mu}) \cdot n^{2}}$$
 
-**What this means:** This formula calculates how long we can wait before recomputing the expensive eigen decomposition. The gap grows with problem dimension ($$n$$), population size ($$\lambda$$), and learning rates ($$c_1, c_{\mu}$$), but shrinks relative to the cost of the decomposition ($$n^2$$).
+**What this means:** This formula calculates how long we can wait before recomputing the expensive eigen decomposition. The gap grows with problem dimension ($$n$$), population size ($$\lambda$$), and learning rates ($$c_1, c\_{\mu}$$), but shrinks relative to the cost of the decomposition ($$n^{2}$$).
 
 **Why this matters:** Eigen decomposition can be 90% of runtime in high dimensions, but the eigenvectors change slowly. This optimization defers the expensive computation until it's actually needed, reducing it by 5-10x in typical runs.
 
@@ -275,7 +275,7 @@ flowchart TD
     AskCall[ask called] --> CheckGap{gap exceeded?}
     CheckGap -->|No| UseCache[Use cache]
     CheckGap -->|Yes| EnforceSym[Enforce symmetry]
-    EnforceSym --> EigenDecomp["Eigen O(n^3)"]
+    EnforceSym --> EigenDecomp["Eigen O(n^{3})"]
     EigenDecomp --> UpdateCache[Update cache]
     UpdateCache --> UseCache
     UseCache --> Sample[Sample]
@@ -416,7 +416,7 @@ flowchart TD
 
 5. **Penalty** (optional): Adds penalty to fitness for remaining violations
 
-   $$f_{\mathrm{penalized}} = f(\mathbf{x}) + \mathrm{penalty}(\mathbf{x})$$
+   $$f\_{\mathrm{penalized}} = f(\mathbf{x}) + \mathrm{penalty}(\mathbf{x})$$
 
    **What this means:** If a solution violates constraints, we add an extra penalty term to its fitness score, making it less attractive to the optimizer. The penalty function quantifies how "bad" the constraint violation is.
 
@@ -458,13 +458,13 @@ The trade-off manifests in build complexity: users must compile Rust code rather
 
 **2. Full vs Diagonal Covariance**
 
-Rather than forcing a single covariance representation, fastcma provides user-selectable modes that optimize for different problem characteristics. Full covariance captures all pairwise variable correlations, enabling adaptation to arbitrary search distributions, but requires $$O(n^3)$$ eigen decomposition for sampling. Diagonal covariance assumes variable independence, reducing storage to $$O(n)$$ and eliminating expensive decompositions, but sacrifices correlation modeling.
+Rather than forcing a single covariance representation, fastcma provides user-selectable modes that optimize for different problem characteristics. Full covariance captures all pairwise variable correlations, enabling adaptation to arbitrary search distributions, but requires $$O(n^{3})$$ eigen decomposition for sampling. Diagonal covariance assumes variable independence, reducing storage to $$O(n)$$ and eliminating expensive decompositions, but sacrifices correlation modeling.
 
 The trade-off becomes clear in high dimensions: full covariance provides better convergence quality but becomes computationally prohibitive, while diagonal covariance offers acceptable quality with dramatically better performance. By making this configurable, users can choose based on their specific problem characteristics and computational constraints.
 
 **3. Lazy vs Eager Eigensystem Updates**
 
-The lazy eigensystem update strategy defers expensive $$O(n^3)$$ eigen decompositions until necessary, rather than recomputing every iteration. This decision recognizes that covariance matrix updates (cheap rank-one and rank-μ operations) can proceed without immediate eigen decomposition, and the eigenbasis remains sufficiently accurate for several iterations.
+The lazy eigensystem update strategy defers expensive $$O(n^{3})$$ eigen decompositions until necessary, rather than recomputing every iteration. This decision recognizes that covariance matrix updates (cheap rank-one and rank-μ operations) can proceed without immediate eigen decomposition, and the eigenbasis remains sufficiently accurate for several iterations.
 
 The trade-off involves slightly stale eigenbasis information between updates, but the performance gain is substantial: 5-10x fewer decompositions in typical runs. The adaptive gap calculation ensures updates occur frequently enough to maintain accuracy while avoiding unnecessary computation. This optimization becomes critical for high-dimensional problems where eigen decomposition dominates runtime.
 
@@ -504,7 +504,7 @@ The API design follows a progressive disclosure principle. New users can start w
 
 ### ⚡ Performance
 
-Performance optimization follows a multi-layered strategy. SIMD acceleration targets the most frequent operations like dot products, achieving 3-4x speedups on modern CPUs. Rayon parallelization exploits the embarrassingly parallel nature of fitness evaluation, scaling linearly with core count. The lazy eigensystem update defers expensive $$O(n^3)$$ eigen decompositions until necessary, reducing their frequency by 5-10x. Pre-allocated buffers eliminate memory allocations in hot paths, critical for low-latency applications.
+Performance optimization follows a multi-layered strategy. SIMD acceleration targets the most frequent operations like dot products, achieving 3-4x speedups on modern CPUs. Rayon parallelization exploits the embarrassingly parallel nature of fitness evaluation, scaling linearly with core count. The lazy eigensystem update defers expensive $$O(n^{3})$$ eigen decompositions until necessary, reducing their frequency by 5-10x. Pre-allocated buffers eliminate memory allocations in hot paths, critical for low-latency applications.
 
 | Optimization | Technique | Speedup | When It Matters |
 |--------------|-----------|---------|-----------------|
@@ -737,8 +737,8 @@ Performance optimization in fastcma follows a philosophy of targeted improvement
 - **Best for**: Expensive objective functions that can be evaluated independently
 
 **3. Lazy Eigensystem Updates**
-- **Strategy**: Defer expensive $$O(n^3)$$ eigen decomposition until necessary
-- **Gap calculation**: $$\mathrm{lazy\_gap\_evals} = \frac{0.5 \cdot n \cdot \lambda}{(c_1 + c_{\mu}) \cdot n^2}$$
+- **Strategy**: Defer expensive $$O(n^{3})$$ eigen decomposition until necessary
+- **Gap calculation**: $$\mathrm{lazy\_gap\_evals} = \frac{0.5 \cdot n \cdot \lambda}{(c_1 + c\_{\mu}) \cdot n^{2}}$$
 - **Impact**: Reduces eigen decompositions by 5-10x in typical runs
 - **Critical for**: High-dimensional problems ($$n > 20$$) where eigen decomposition dominates
 
@@ -965,7 +965,7 @@ The hard suite expands testing to twenty functions that stress-test the optimize
 | **Dixon-Price** | Variable coupling | Moderate | Non-separable |
 | **Powell** | Quartic narrow valleys | High | Non-separable |
 | **Styblinski-Tang** | Multiple local minima | Moderate | Separable |
-| **Bent Cigar** | Extreme ill-conditioning | $$10^6$$ | Separable |
+| **Bent Cigar** | Extreme ill-conditioning | $$10^{6}$$ | Separable |
 | **Elliptic** | Exponentially increasing | $$10^{6(i-1)/(n-1)}$$ for dimension $$i$$ | Separable |
 | **Schwefel 1.2** | Quadratic interactions | Moderate | Non-separable |
 | **Schwefel 2.22** | Non-differentiable | Low | Separable |
