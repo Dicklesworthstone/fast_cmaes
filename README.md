@@ -17,6 +17,8 @@ Hyper-optimized CMA-ES in Rust with a first-class Python experience. SIMD, rayon
 - [Quickstart (Python)](#quickstart-python)
 - [Vectorized & Constraints](#vectorized--constraints)
 - [Rust usage](#rust-usage-library)
+- [C/C++ FFI](#cc-ffi)
+- [REST API example](#rest-api-example)
 - [Demos & TUI](#demos--visualization)
 - [Baselines & Benchmarks](#baselines--benchmarks)
 - [Performance choices](#performance-considerations)
@@ -73,6 +75,8 @@ flowchart LR
 - **Pure-Python baseline**: `fastcma.cma_es` for speed comparisons.
 - **Rich TUI**: live, colorful CMA-ES progress view.
 - **Cross-platform wheels**: CI builds for Linux/macOS/Windows, Python 3.12–3.14.
+- **C/C++ hooks**: tiny FFI surface with headers in `include/` so native apps can call the core.
+- **REST example**: FastAPI microservice in `examples/api_server.py` for remote jobs.
 
 ## Installation (Python)
 Fastest path (PyPI):
@@ -150,10 +154,40 @@ let (xmin, _state) = optimize_rust(
 println!("xmin = {:?}", xmin);
 ```
 
+## C/C++ FFI
+Lightweight ABI for embedding is in `include/fastcma.h` and `include/fastcma.hpp` (version helper + sphere demo). Build the shared library:
+```bash
+cargo build --release
+```
+Use from C:
+```c
+#include "fastcma.h"
+#include <stdio.h>
+
+int main() {
+    double xmin[4];
+    double f = fastcma_sphere(4, 0.4, 20000, 42ULL, xmin);
+    printf("f=%g x0=%g %g %g %g\n", f, xmin[0], xmin[1], xmin[2], xmin[3]);
+}
+```
+Compile (adjust path/extension per platform):
+```bash
+gcc demo.c -L target/release -lfastcma -I include
+```
+
+## REST API example
+`examples/api_server.py` exposes a minimal FastAPI service wrapping `fastcma.fmin` for remote jobs. Run with uvicorn:
+```bash
+uv pip install "fastapi[standard]" fast-cmaes
+uvicorn examples.api_server:app --reload
+```
+POST `/optimize` with JSON payload `{ "x0": [0.5, 0.5], "sigma": 0.4, "maxfevals": 5000 }` to get `xmin`, `fbest`, and eval counts.
+
 ## Demos & visualization
 - `examples/python_quickstart.py` – minimal sphere + vectorized demo.
 - `examples/python_benchmarks.py` – Rust vs naive Python on sphere; naive on Rastrigin.
 - `examples/rich_tui_demo.py` – Rich TUI streaming sigma/fbest/evals while minimizing Rosenbrock.
+- `examples/api_server.py` – FastAPI microservice for remote optimize calls.
 
 One-shot setup + demo runner:
 ```bash
