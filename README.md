@@ -738,7 +738,7 @@ Performance optimization in fastcma follows a philosophy of targeted improvement
 
 **3. Lazy Eigensystem Updates**
 - **Strategy**: Defer expensive $$O(n^{3})$$ eigen decomposition until necessary
-- **Gap calculation**: $$\mathrm{lazy\_gap\_evals} = \frac{0.5 \cdot n \cdot \lambda}{(c_1 + c\_{\mu}) \cdot n^{2}}$$
+- **Gap calculation**: `lazy_gap_evals = 0.5 * n * λ / ((c_1 + c_μ) * n²)`
 - **Impact**: Reduces eigen decompositions by 5-10x in typical runs
 - **Critical for**: High-dimensional problems ($$n > 20$$) where eigen decomposition dominates
 
