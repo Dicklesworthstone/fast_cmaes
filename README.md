@@ -4,9 +4,10 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](#license)
 [![PyPI](https://img.shields.io/pypi/v/fast-cmaes.svg)](https://pypi.org/project/fast-cmaes/)
 [![Python](https://img.shields.io/badge/Python-3.12%20--%203.14-blue)](#installation-python)
+[![PyPI version](https://img.shields.io/pypi/v/fast-cmaes.svg)](https://pypi.org/project/fast-cmaes/)
 [![Rust](https://img.shields.io/badge/Rust-nightly-orange)](#rust-usage-library)
 
-Hyper-optimized CMA-ES in Rust with a first-class Python experience. SIMD, rayon, deterministic seeds, vectorized objectives, restarts, constraints, and a Rich-powered TUI — all while keeping the Rust core available for native use. Published to PyPI as `fast-cmaes` (module name: `fastcma`).
+Hyper-optimized CMA-ES in Rust with a first-class Python experience. SIMD, rayon, deterministic seeds, vectorized objectives, restarts, constraints, and a Rich-powered TUI — all while keeping the Rust core available for native use. Published to PyPI as `fast-cmaes` (module name: `fastcma`). Latest release: **0.1.4**.
 
 ## Table of contents
 - [Why CMA-ES](#why-cma-es)
@@ -76,7 +77,7 @@ flowchart LR
 ## Installation (Python)
 Fastest path (PyPI):
 ```bash
-python -m pip install fast-cmaes  # installs module `fastcma`
+python -m pip install fast-cmaes==0.1.4  # installs module `fastcma`
 ```
 
 Build locally (needed only if hacking on Rust):
@@ -170,6 +171,7 @@ uv run python examples/rich_tui_demo.py
 ## Baselines & benchmarks
 - Pure Python baseline: `fastcma_baseline.cma_es`, `fastcma_baseline.benchmark_sphere` (see `python/fastcma_baseline/naive_cma.py`).
 - Integration benchmarks (fixed seeds): sphere, Rosenbrock, Rastrigin, Ackley, Schwefel, Griewank in `tests/benchmarks.rs`.
+- Hard-suite (20 classic tough functions, seeded, higher dims): Zakharov, Levy, Dixon-Price, Powell, Styblinski–Tang, Bohachevsky, Bukin6, Dropwave, Alpine N.1, Elliptic, Salomon, Quartic, Schwefel 1.2/2.22, Bent Cigar, Rastrigin 10D, Ackley 10D, Griewank 10D, Rosenbrock 6D, Sum Squares 12D in `tests/hard_benchmarks.rs`.
 - Rich TUI demo for live insight.
 
 ## Performance considerations
@@ -186,9 +188,10 @@ uv run python examples/rich_tui_demo.py
 - `demo`: pulls in `rich` for the TUI.
 
 ## Testing
-- Rust: `cargo test`
-- Python smoke: `pytest tests/python_smoke.py`
-- CI: GitHub Actions builds wheels on nightly Rust; runs smoke tests; can publish to PyPI when `PYPI_API_TOKEN` is set.
+- Rust quick suite: `cargo test`
+- Extended hard benchmarks (20 classic functions incl. high-dim Rastrigin/Ackley/Styblinski–Tang, Bukin6, Dropwave, Powell, Dixon-Price, Levy, Zakharov, Alpine N.1, Bent Cigar, Salomon, etc.): `cargo test --test hard_benchmarks` (takes ~90s)
+- Python smoke (local wheel): `pytest tests/python_smoke.py`
+- CI: GitHub Actions builds wheels on nightly Rust; runs smoke tests; publishes to PyPI on tags when `PYPI_API_TOKEN` is set; PyPI smoke follows publish.
 
 ## Contributing
 - Nightly Rust required (see `rust-toolchain.toml`).
