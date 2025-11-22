@@ -11,6 +11,8 @@ use rayon::prelude::*;
 use std::cmp::Ordering;
 use std::f64;
 
+pub mod ffi;
+
 use nalgebra::DMatrix;
 
 #[cfg(feature = "numpy_support")]
