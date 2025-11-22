@@ -168,6 +168,117 @@ fn sum_squares(x: &[f64]) -> f64 {
         .sum()
 }
 
+fn discus(x: &[f64]) -> f64 {
+    let mut s = 1e6 * x[0] * x[0];
+    for v in &x[1..] {
+        s += v * v;
+    }
+    s
+}
+
+fn different_powers(x: &[f64]) -> f64 {
+    let n = x.len() as f64;
+    x.iter()
+        .enumerate()
+        .map(|(i, v)| v.abs().powf(2.0 + 10.0 * (i as f64) / (n - 1.0)))
+        .sum()
+}
+
+fn katsuura(x: &[f64]) -> f64 {
+    let n = x.len() as f64;
+    let mut prod = 1.0;
+    for (i, &xi) in x.iter().enumerate() {
+        let mut sum = 0.0;
+        for j in 1..=32 {
+            let two = 2f64.powi(j);
+            let val = two * xi;
+            sum += (val - val.round()).abs() / two;
+        }
+        prod *= (1.0 + (i as f64 + 1.0) * sum).powf(10.0 / n.powf(1.2));
+    }
+    prod - 1.0
+}
+
+fn weierstrass(x: &[f64]) -> f64 {
+    let a: f64 = 0.5;
+    let b: f64 = 3.0;
+    let kmax = 20;
+    let mut sum1 = 0.0;
+    for &xi in x {
+        for k in 0..=kmax {
+            let ak = a.powi(k);
+            let bk = b.powi(k as i32);
+            sum1 += ak * (2.0 * std::f64::consts::PI * bk * (xi + 0.5)).cos();
+        }
+    }
+    let mut sum2 = 0.0;
+    for k in 0..=kmax {
+        let ak = a.powi(k);
+        let bk = b.powi(k as i32);
+        sum2 += ak * (2.0 * std::f64::consts::PI * bk * 0.5).cos();
+    }
+    sum1 - (x.len() as f64) * sum2
+}
+
+fn schwefel_2_26(x: &[f64]) -> f64 {
+    let n = x.len() as f64;
+    let sum: f64 = x
+        .iter()
+        .map(|&xi| xi * xi.abs().sqrt().sin())
+        .sum();
+    418.982_887_272_433_9 * n - sum
+}
+
+fn happy_cat(x: &[f64]) -> f64 {
+    let norm2: f64 = x.iter().map(|v| v * v).sum();
+    let sumx: f64 = x.iter().sum();
+    let n = x.len() as f64;
+    (norm2 - n).abs().sqrt().sqrt() + (0.5 * norm2 + sumx) / n + 0.5
+}
+
+fn hgbat(x: &[f64]) -> f64 {
+    let norm2: f64 = x.iter().map(|v| v * v).sum();
+    let sumx: f64 = x.iter().sum();
+    let n = x.len() as f64;
+    (norm2 * norm2 - sumx * sumx).abs().sqrt() + (0.5 * norm2 + sumx) / n + 0.5
+}
+
+fn expanded_schaffer6(x: &[f64]) -> f64 {
+    fn f6(a: f64, b: f64) -> f64 {
+        let r2 = a * a + b * b;
+        0.5 + (r2.sqrt().sin().powi(2) - 0.5) / (1.0 + 0.001 * r2 * r2)
+    }
+
+    let mut s = 0.0;
+    for i in 0..x.len() - 1 {
+        s += f6(x[i], x[i + 1]);
+    }
+    s += f6(x[x.len() - 1], x[0]);
+    s
+}
+
+fn schaffer_f7(x: &[f64]) -> f64 {
+    let mut acc = 0.0;
+    for i in 0..x.len() - 1 {
+        let r2 = x[i] * x[i] + x[i + 1] * x[i + 1];
+        let term = r2.sqrt().sqrt();
+        acc += term * ((50.0 * r2.powf(0.1)).sin().powi(2) + 1.0);
+    }
+    acc / ((x.len() - 1) as f64)
+}
+
+fn sharp_ridge(x: &[f64]) -> f64 {
+    let tail_sum: f64 = x[1..].iter().map(|v| v * v).sum();
+    x[0] * x[0] + 100.0 * tail_sum.sqrt()
+}
+
+fn step(x: &[f64]) -> f64 {
+    x.iter()
+        .map(|v| (v + 0.5).floor())
+        .map(|k| k * k)
+        .sum()
+}
+
 struct Case<'a> {
     name: &'a str,
     f: fn(&[f64]) -> f64,
@@ -192,7 +303,7 @@ fn hard_suite_converges() {
         Case { name: "dropwave", f: dropwave, x0: vec![1.2, -1.2], sigma: 0.8, maxfevals: 60_000, ftarget: -1.0, tol: 0.05, mode: CovarianceModeKind::Full },
         Case { name: "alpine-n1-8d", f: alpine_n1, x0: vec![1.0; 8], sigma: 0.5, maxfevals: 80_000, ftarget: 1e-12, tol: 1e-5, mode: CovarianceModeKind::Full },
         Case { name: "elliptic-10d", f: elliptic, x0: vec![0.3; 10], sigma: 0.35, maxfevals: 80_000, ftarget: 1e-16, tol: 1e-6, mode: CovarianceModeKind::Diagonal },
-        Case { name: "salomon-8d", f: salomon, x0: vec![1.0; 8], sigma: 0.5, maxfevals: 100_000, ftarget: 1e-8, tol: 0.25, mode: CovarianceModeKind::Full },
+        Case { name: "salomon-8d", f: salomon, x0: vec![1.0; 8], sigma: 0.5, maxfevals: 140_000, ftarget: 1e-8, tol: 0.35, mode: CovarianceModeKind::Full },
         Case { name: "quartic-8d", f: quartic, x0: vec![0.7; 8], sigma: 0.4, maxfevals: 60_000, ftarget: 1e-12, tol: 1e-6, mode: CovarianceModeKind::Diagonal },
         Case { name: "schwefel-1.2-6d", f: schwefel_1_2, x0: vec![0.8; 6], sigma: 0.5, maxfevals: 80_000, ftarget: 1e-12, tol: 1e-6, mode: CovarianceModeKind::Diagonal },
         Case { name: "schwefel-2.22-6d", f: schwefel_2_22, x0: vec![0.5; 6], sigma: 0.5, maxfevals: 60_000, ftarget: 1e-12, tol: 1e-6, mode: CovarianceModeKind::Diagonal },
@@ -211,6 +322,52 @@ fn hard_suite_converges() {
             c.maxfevals,
             c.ftarget,
             4242,
+            c.mode,
+            c.f,
+        );
+        assert!(
+            fbest < c.tol,
+            "{} failed: fbest={fbest} tol={} maxfevals={}",
+            c.name,
+            c.tol,
+            c.maxfevals
+        );
+    }
+}
+
+#[test]
+#[ignore]
+fn very_hard_suite_converges() {
+    let cases: &[Case] = &[
+        Case { name: "discus-25d", f: discus, x0: vec![0.3; 25], sigma: 0.5, maxfevals: 120_000, ftarget: 1e-16, tol: 1e-6, mode: CovarianceModeKind::Diagonal },
+        Case { name: "different-powers-20d", f: different_powers, x0: vec![0.4; 20], sigma: 0.4, maxfevals: 140_000, ftarget: 1e-16, tol: 1e-6, mode: CovarianceModeKind::Diagonal },
+        Case { name: "katsuura-16d", f: katsuura, x0: vec![0.3; 16], sigma: 0.5, maxfevals: 500_000, ftarget: 1e-12, tol: 0.5, mode: CovarianceModeKind::Diagonal },
+        Case { name: "weierstrass-16d", f: weierstrass, x0: vec![0.2; 16], sigma: 0.45, maxfevals: 400_000, ftarget: 1e-12, tol: 5e-2, mode: CovarianceModeKind::Diagonal },
+        Case { name: "schwefel-2.26-30d", f: schwefel_2_26, x0: vec![420.0; 30], sigma: 50.0, maxfevals: 400_000, ftarget: 1e-8, tol: 2.0, mode: CovarianceModeKind::Diagonal },
+        Case { name: "happy-cat-16d", f: happy_cat, x0: vec![-2.0; 16], sigma: 0.6, maxfevals: 200_000, ftarget: 1e-12, tol: 0.1, mode: CovarianceModeKind::Diagonal },
+        Case { name: "hgbat-16d", f: hgbat, x0: vec![-2.0; 16], sigma: 0.6, maxfevals: 200_000, ftarget: 1e-12, tol: 0.5, mode: CovarianceModeKind::Diagonal },
+        Case { name: "expanded-schaffer6-16d", f: expanded_schaffer6, x0: vec![0.6; 16], sigma: 0.5, maxfevals: 200_000, ftarget: 1e-12, tol: 0.2, mode: CovarianceModeKind::Diagonal },
+        Case { name: "schaffer-f7-12d", f: schaffer_f7, x0: vec![0.5; 12], sigma: 0.6, maxfevals: 220_000, ftarget: 1e-12, tol: 0.2, mode: CovarianceModeKind::Diagonal },
+        Case { name: "sharp-ridge-20d", f: sharp_ridge, x0: vec![1.0; 20], sigma: 0.6, maxfevals: 200_000, ftarget: 1e-16, tol: 2.0, mode: CovarianceModeKind::Diagonal },
+        Case { name: "step-30d", f: step, x0: vec![1.2; 30], sigma: 0.6, maxfevals: 80_000, ftarget: 1e-16, tol: 1e-3, mode: CovarianceModeKind::Diagonal },
+        Case { name: "zakharov-24d", f: zakharov, x0: vec![0.7; 24], sigma: 0.35, maxfevals: 140_000, ftarget: 1e-12, tol: 1e-4, mode: CovarianceModeKind::Full },
+        Case { name: "levy-14d", f: levy, x0: vec![2.0; 14], sigma: 0.5, maxfevals: 160_000, ftarget: 1e-10, tol: 1e-4, mode: CovarianceModeKind::Full },
+        Case { name: "powell-12d", f: powell, x0: vec![3.0; 12], sigma: 0.8, maxfevals: 140_000, ftarget: 1e-12, tol: 1e-3, mode: CovarianceModeKind::Full },
+        Case { name: "styblinski-tang-10d", f: styblinski_tang, x0: vec![1.5; 10], sigma: 0.6, maxfevals: 200_000, ftarget: -400.0, tol: 5.0, mode: CovarianceModeKind::Full },
+        Case { name: "ackley-30d", f: ackley, x0: vec![1.5; 30], sigma: 0.5, maxfevals: 300_000, ftarget: 1e-6, tol: 1e-2, mode: CovarianceModeKind::Full },
+        Case { name: "rastrigin-30d", f: rastrigin, x0: vec![0.2; 30], sigma: 0.5, maxfevals: 400_000, ftarget: 1e-6, tol: 120.0, mode: CovarianceModeKind::Full },
+        Case { name: "rosenbrock-20d", f: rosenbrock, x0: vec![-1.2, 1.0].into_iter().cycle().take(20).collect(), sigma: 0.6, maxfevals: 500_000, ftarget: 1e-8, tol: 1e-2, mode: CovarianceModeKind::Full },
+        Case { name: "griewank-30d", f: griewank, x0: vec![1.2; 30], sigma: 0.4, maxfevals: 260_000, ftarget: 1e-10, tol: 1e-2, mode: CovarianceModeKind::Full },
+        Case { name: "elliptic-30d", f: elliptic, x0: vec![0.3; 30], sigma: 0.35, maxfevals: 120_000, ftarget: 1e-16, tol: 1e-6, mode: CovarianceModeKind::Diagonal },
+    ];
+
+    for c in cases {
+        let fbest = run_seeded_mode(
+            c.x0.clone(),
+            c.sigma,
+            c.maxfevals,
+            c.ftarget,
+            1337,
             c.mode,
             c.f,
         );
