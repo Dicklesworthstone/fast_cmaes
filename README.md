@@ -132,20 +132,20 @@ flowchart TD
 
 - **`ask()`**: Generates $$\lambda$$ candidate solutions by sampling:
   
-  $$x_i \sim \mathcal{N}(\mathbf{x}_{\text{mean}}, \sigma^2 \mathbf{C})$$
+  $$x_i \sim \mathcal{N}(\mathbf{x}_{\mathrm{mean}}, \sigma^2 \mathbf{C})$$
   
   where $$\mathbf{C}$$ is the covariance matrix and $$\sigma$$ is the step size.
 
 - **`tell()`**: Updates distribution parameters:
   - **Weighted mean**: 
     
-    $$\mathbf{x}_{\text{mean}} \leftarrow \sum_{i=1}^{\mu} w_i \mathbf{x}_{i:\lambda}$$
+    $$\mathbf{x}_{\mathrm{mean}} \leftarrow \sum_{i=1}^{\mu} w_i \mathbf{x}_{i:\lambda}$$
   
   - **Evolution paths**: 
     
-    $$\mathbf{p}_c \leftarrow (1-c_c)\mathbf{p}_c + c_c h_{\sigma} \frac{\mathbf{x}_{\text{mean}} - \mathbf{x}_{\text{old}}}{\sigma}$$
+    $$\mathbf{p}_c \leftarrow (1-c_c)\mathbf{p}_c + c_c h_{\sigma} \frac{\mathbf{x}_{\mathrm{mean}} - \mathbf{x}_{\mathrm{old}}}{\sigma}$$
     
-    $$\mathbf{p}_{\sigma} \leftarrow (1-c_{\sigma})\mathbf{p}_{\sigma} + c_{\sigma} \frac{\mathbf{C}^{-1/2}(\mathbf{x}_{\text{mean}} - \mathbf{x}_{\text{old}})}{\sigma}$$
+    $$\mathbf{p}_{\sigma} \leftarrow (1-c_{\sigma})\mathbf{p}_{\sigma} + c_{\sigma} \frac{\mathbf{C}^{-1/2}(\mathbf{x}_{\mathrm{mean}} - \mathbf{x}_{\mathrm{old}})}{\sigma}$$
   
   - **Covariance update**: 
     
@@ -162,11 +162,11 @@ Two modes optimize for different problem characteristics:
 ```mermaid
 flowchart TD
     Start([Mode Selection]) --> CheckDim{n < 50?}
-    CheckDim -->|Yes| Full[Full: n×n, O(n³)]
-    CheckDim -->|No| Diag[Diagonal: n, O(n)]
+    CheckDim -->|Yes| Full["Full: n×n, O(n^3)"]
+    CheckDim -->|No| Diag["Diagonal: n, O(n)"]
     
-    Full --> FullUse[Correlations, curved valleys]
-    Diag --> DiagUse[Fast, separable]
+    Full --> FullUse["Correlations, curved valleys"]
+    Diag --> DiagUse["Fast, separable"]
     
     classDef fullStyle fill:#b3d9ff,stroke:#7fb3d3,stroke-width:1px,color:#333
     classDef diagStyle fill:#b3e5d1,stroke:#7fb8a3,stroke-width:1px,color:#333
@@ -246,14 +246,14 @@ fn dot_simd(a: &[f64], b: &[f64]) -> f64
 
 The most expensive operation ($$O(n^3)$$ eigen decomposition) is deferred using an adaptive gap:
 
-$$\text{lazy\_gap\_evals} = \frac{0.5 \cdot n \cdot \lambda}{(c_1 + c_{\mu}) \cdot n^2}$$
+$$\mathit{lazy\_gap\_evals} = \frac{0.5 \cdot n \cdot \lambda}{(c_1 + c_{\mu}) \cdot n^2}$$
 
 ```mermaid
 flowchart TD
     AskCall[ask called] --> CheckGap{gap exceeded?}
     CheckGap -->|No| UseCache[Use cache]
     CheckGap -->|Yes| EnforceSym[Enforce symmetry]
-    EnforceSym --> EigenDecomp[Eigen O(n³)]
+    EnforceSym --> EigenDecomp["Eigen O(n^3)"]
     EigenDecomp --> UpdateCache[Update cache]
     UpdateCache --> UseCache
     UseCache --> Sample[Sample]
@@ -267,7 +267,7 @@ flowchart TD
     class UseCache,Sample cacheStyle
 ```
 
-- Eigensystem only recomputed when $$\text{current\_eval} > \text{updated\_eval} + \text{lazy\_gap\_evals}$$
+- Eigensystem only recomputed when $$\mathit{current\_eval} > \mathit{updated\_eval} + \mathit{lazy\_gap\_evals}$$
 - Gap grows with dimension and learning rates, naturally reducing update frequency
 - Covariance matrix updates continue (cheap rank-one/rank-μ), but sampling uses cached eigenbasis
 - **Impact**: Reduces eigen decompositions by 5-10x in typical runs, critical for high-dimensional problems
@@ -386,7 +386,7 @@ flowchart TD
 
 5. **Penalty** (optional): Adds penalty to fitness for remaining violations
    
-   $$f_{\text{penalized}} = f(\mathbf{x}) + \text{penalty}(\mathbf{x})$$
+   $$f_{\mathit{penalized}} = f(\mathbf{x}) + \mathit{penalty}(\mathbf{x})$$
 
 - **Why**: Flexible constraint handling accommodates diverse problem types
 - **Impact**: Works with box constraints, nonlinear constraints (via penalty), and custom feasibility rules
@@ -704,13 +704,13 @@ Performance optimization in fastcma follows a philosophy of targeted improvement
 
 **3. Lazy Eigensystem Updates**
 - **Strategy**: Defer expensive $$O(n^3)$$ eigen decomposition until necessary
-- **Gap calculation**: $$\text{lazy\_gap\_evals} = \frac{0.5 \cdot n \cdot \lambda}{(c_1 + c_{\mu}) \cdot n^2}$$
+- **Gap calculation**: $$\mathit{lazy\_gap\_evals} = \frac{0.5 \cdot n \cdot \lambda}{(c_1 + c_{\mu}) \cdot n^2}$$
 - **Impact**: Reduces eigen decompositions by 5-10x in typical runs
 - **Critical for**: High-dimensional problems ($$n > 20$$) where eigen decomposition dominates
 
 **4. Diagonal Covariance Mode**
 - **When to use**: High dimensions (n > 50) or separable problems
-- **Trade-off**: Faster (`O(n)` vs `O(n³)`) but assumes independent variables
+- **Trade-off**: Faster (`O(n)` vs `O(n^3)`) but assumes independent variables
 - **Speedup**: 10-100x faster covariance updates, but may converge slower on correlated problems
 - **Access**: Set `covariance_mode="diagonal"` in Python API
 
