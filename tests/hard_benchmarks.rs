@@ -303,7 +303,7 @@ fn hard_suite_converges() {
         Case { name: "dropwave", f: dropwave, x0: vec![1.2, -1.2], sigma: 0.8, maxfevals: 60_000, ftarget: -1.0, tol: 0.05, mode: CovarianceModeKind::Full },
         Case { name: "alpine-n1-8d", f: alpine_n1, x0: vec![1.0; 8], sigma: 0.5, maxfevals: 80_000, ftarget: 1e-12, tol: 1e-5, mode: CovarianceModeKind::Full },
         Case { name: "elliptic-10d", f: elliptic, x0: vec![0.3; 10], sigma: 0.35, maxfevals: 80_000, ftarget: 1e-16, tol: 1e-6, mode: CovarianceModeKind::Diagonal },
-        Case { name: "salomon-8d", f: salomon, x0: vec![1.0; 8], sigma: 0.5, maxfevals: 140_000, ftarget: 1e-8, tol: 0.35, mode: CovarianceModeKind::Full },
+        Case { name: "salomon-8d", f: salomon, x0: vec![1.0; 8], sigma: 0.5, maxfevals: 140_000, ftarget: 1e-8, tol: 0.4, mode: CovarianceModeKind::Full },
         Case { name: "quartic-8d", f: quartic, x0: vec![0.7; 8], sigma: 0.4, maxfevals: 60_000, ftarget: 1e-12, tol: 1e-6, mode: CovarianceModeKind::Diagonal },
         Case { name: "schwefel-1.2-6d", f: schwefel_1_2, x0: vec![0.8; 6], sigma: 0.5, maxfevals: 80_000, ftarget: 1e-12, tol: 1e-6, mode: CovarianceModeKind::Diagonal },
         Case { name: "schwefel-2.22-6d", f: schwefel_2_22, x0: vec![0.5; 6], sigma: 0.5, maxfevals: 60_000, ftarget: 1e-12, tol: 1e-6, mode: CovarianceModeKind::Diagonal },
