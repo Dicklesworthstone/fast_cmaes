@@ -264,7 +264,7 @@ fn dot_simd(a: &[f64], b: &[f64]) -> f64
 
 The most expensive operation ($$O(n^{3})$$ eigen decomposition) is deferred using an adaptive gap:
 
-$$\mathrm{lazy\_gap\_evals} = \frac{0.5 \cdot n \cdot \lambda}{(c_1 + c\_{\mu}) \cdot n^{2}}$$
+$$lazy\_gap\_evals = \frac{0.5 \cdot n \cdot \lambda}{(c_1 + c_{\mu}) \cdot n^{2}}$$
 
 **What this means:** This formula calculates how long we can wait before recomputing the expensive eigen decomposition. The gap grows with problem dimension ($$n$$), population size ($$\lambda$$), and learning rates (`c_1`, `c_{\mu}`), but shrinks relative to the cost of the decomposition ($$n^{2}$$).
 
