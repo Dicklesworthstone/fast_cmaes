@@ -266,7 +266,7 @@ The most expensive operation ($$O(n^{3})$$ eigen decomposition) is deferred usin
 
 $$\mathrm{lazy\_gap\_evals} = \frac{0.5 \cdot n \cdot \lambda}{(c_1 + c\_{\mu}) \cdot n^{2}}$$
 
-**What this means:** This formula calculates how long we can wait before recomputing the expensive eigen decomposition. The gap grows with problem dimension ($$n$$), population size ($$\lambda$$), and learning rates ($$c_1$$, $$c_{\mu}$$), but shrinks relative to the cost of the decomposition ($$n^{2}$$).
+**What this means:** This formula calculates how long we can wait before recomputing the expensive eigen decomposition. The gap grows with problem dimension ($$n$$), population size ($$\lambda$$), and learning rates (`c_1`, `c_{\mu}`), but shrinks relative to the cost of the decomposition ($$n^{2}$$).
 
 **Why this matters:** Eigen decomposition can be 90% of runtime in high dimensions, but the eigenvectors change slowly. This optimization defers the expensive computation until it's actually needed, reducing it by 5-10x in typical runs.
 
