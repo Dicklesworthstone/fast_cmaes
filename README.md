@@ -192,7 +192,7 @@ uv run python examples/rich_tui_demo.py
 - Rust quick suite: `cargo test`
 - Extended hard benchmarks (20 classic functions): `cargo test --test hard_benchmarks` (takes ~90s)
 - Very-hard (ignored) suite (high-dim/fractal/ill-conditioned, +~20 cases): `cargo test --test hard_benchmarks -- --ignored`
-- CI runs the core suite on every push/PR and executes the ignored very-hard suite on GitHub Actions workers (job: `very-hard`) so heavy compute stays off your local machine.
+- CI runs the core suite on every push/PR and executes the ignored very-hard suite on GitHub Actions workers (job: `very-hard`) so heavy compute stays off your local machine; expect PR CI to take a few minutes longer because of that job and wheel matrix builds.
 - Python smoke (local wheel): `pytest tests/python_smoke.py`
 - CI: GitHub Actions builds wheels on nightly Rust; runs smoke tests; publishes to PyPI on tags when `PYPI_API_TOKEN` is set; PyPI smoke follows publish.
 
