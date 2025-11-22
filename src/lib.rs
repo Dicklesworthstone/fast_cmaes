@@ -580,7 +580,6 @@ impl CmaesState {
         }
     }
 
-    #[cfg(any(test, feature = "test_utils"))]
     fn new_with_seed(
         xstart: Vec<f64>,
         sigma: f64,

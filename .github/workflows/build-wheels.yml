@@ -91,6 +91,55 @@ jobs:
           name: timings-very-hard-${{ github.run_id }}
           path: timings-very-hard.log
 
+  integration-python:
+    needs: test
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.12', '3.13']
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install Rust (nightly for extension build)
+        uses: dtolnay/rust-toolchain@nightly
+      - name: Install build/test deps and package
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install . fastapi[standard] httpx pytest
+      - name: Run Python integration tests (API + roundtrip)
+        run: |
+          pytest tests/test_api_smoke.py tests/test_roundtrip.py
+
+  integration-ffi:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Cache cargo build artifacts
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Install Rust (nightly for portable_simd)
+        uses: dtolnay/rust-toolchain@nightly
+      - name: Build Rust library (release)
+        run: cargo build --release
+      - name: Compile C FFI smoke test
+        shell: bash
+        run: |
+          PY_LDFLAGS=$(python3-config --embed --ldflags 2>/dev/null || python3-config --ldflags)
+          gcc tests/ffi_smoke/demo.c -o ffi_demo -I include -L target/release -lfastcma -lm $PY_LDFLAGS
+      - name: Run FFI smoke binary
+        env:
+          LD_LIBRARY_PATH: target/release
+        run: ./ffi_demo
+
   miri:
     if: (github.event_name == 'schedule' && github.event.schedule == '0 6 * * 0') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
@@ -192,8 +241,9 @@ jobs:
           set -e
           WHEEL=$(ls dist/*.whl | head -n1)
           python -m pip install "$WHEEL"
-          python -m pip install numpy || true  # optional dependency for local import
+          python -m pip install numpy pytest || true  # optional dependency for local import
           python tests/python_smoke.py
+          python -m pytest tests/test_roundtrip.py
 
       - name: Upload wheels
         uses: actions/upload-artifact@v4

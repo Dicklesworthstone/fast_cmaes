@@ -44,7 +44,8 @@ pub unsafe extern "C" fn fastcma_sphere(
     }
     let (xbest, fbest, _eb, _ce, _it, _xm, _std) = es.result();
     if !xmin.is_null() {
-        for i in 0..dim.min(xbest.len()) {
+        let count = usize::min(dim, xbest.len());
+        for i in 0..count {
             *xmin.add(i) = xbest[i];
         }
     }
