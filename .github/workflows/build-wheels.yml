@@ -150,7 +150,10 @@ jobs:
       - run: rustup component add miri
       - name: Run miri on lib tests (lite)
         env:
-          MIRIFLAGS: "-Zmiri-symbolic-alignment-check"
+          # Use Tree Borrows instead of Stacked Borrows to avoid false positives
+          # from crossbeam-epoch (used by rayon). Tree Borrows is the newer,
+          # more permissive aliasing model that handles concurrent code better.
+          MIRIFLAGS: "-Zmiri-symbolic-alignment-check -Zmiri-tree-borrows"
         run: |
           cargo miri test --lib
 
@@ -161,6 +164,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install Rust nightly
         uses: dtolnay/rust-toolchain@nightly
+      - name: Install rust-src for build-std
+        run: rustup component add rust-src --toolchain nightly-x86_64-unknown-linux-gnu
       - name: Install LLVM tools
         run: sudo apt-get update && sudo apt-get install -y llvm
       - name: Run address sanitizer on lib tests
