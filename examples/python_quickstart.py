@@ -6,7 +6,6 @@ Run with:
     python examples/python_quickstart.py
 """
 
-import math
 from pprint import pprint
 
 import fastcma

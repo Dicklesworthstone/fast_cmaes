@@ -66,11 +66,12 @@ def main():
         txt.append("• Compare with naive Python baseline in examples/python_benchmarks.py\n", style="dim")
         return Panel(txt, title="About", box=box.SQUARE)
 
-    layout = lambda iteration, fbest, xbest: Group(
-        Align.center(legend_panel()),
-        Align.center(stats_panel(iteration, fbest, xbest)),
-        progress,
-    )
+    def layout(iteration, fbest, xbest):
+        return Group(
+            Align.center(legend_panel()),
+            Align.center(stats_panel(iteration, fbest, xbest)),
+            progress,
+        )
 
     with Live(layout(0, float("inf"), [math.nan, math.nan]), console=console, refresh_per_second=10) as live:
         iteration = 0
