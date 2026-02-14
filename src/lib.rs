@@ -1,7 +1,9 @@
 #![feature(portable_simd)]
 
 use core::simd::{num::SimdFloat, Simd};
+#[cfg(feature = "python")]
 use pyo3::prelude::*;
+#[cfg(feature = "python")]
 use pyo3::types::{PyDict, PyList};
 use rand::rngs::StdRng;
 use rand::Rng;
@@ -15,7 +17,7 @@ pub mod ffi;
 
 use nalgebra::DMatrix;
 
-#[cfg(feature = "numpy_support")]
+#[cfg(all(feature = "python", feature = "numpy_support"))]
 use numpy::PyReadonlyArray1;
 
 const SIMD_LANES: usize = 4;
@@ -495,7 +497,7 @@ enum TerminationReason {
     TolX(f64),
 }
 
-struct CmaesState {
+pub struct CmaesState {
     n: usize,
     params: CmaesParameters,
     maxfevals: usize,
@@ -528,7 +530,7 @@ struct NoiseConfig {
 }
 
 impl CmaesState {
-    fn new(
+    pub fn new(
         xstart: Vec<f64>,
         sigma: f64,
         popsize: Option<usize>,
@@ -580,7 +582,7 @@ impl CmaesState {
         }
     }
 
-    fn new_with_seed(
+    pub fn new_with_seed(
         xstart: Vec<f64>,
         sigma: f64,
         popsize: Option<usize>,
@@ -598,7 +600,7 @@ impl CmaesState {
         self.noise_cfg = Some(cfg);
         self
     }
-    fn ask(&mut self) -> Vec<Vec<f64>> {
+    pub fn ask(&mut self) -> Vec<Vec<f64>> {
         self.cov
             .update_eigensystem(self.counteval, self.params.lazy_gap_evals);
         let lam = self.params.lam;
@@ -627,7 +629,7 @@ impl CmaesState {
         }
         x
     }
-    fn tell(&mut self, arx: Vec<Vec<f64>>, fitvals: Vec<f64>) {
+    pub fn tell(&mut self, arx: Vec<Vec<f64>>, fitvals: Vec<f64>) {
         let lam = self.params.lam;
         if arx.len() != lam || fitvals.len() != lam {
             eprintln!(
@@ -796,10 +798,10 @@ impl CmaesState {
         }
         res
     }
-    fn has_terminated(&self) -> bool {
+    pub fn has_terminated(&self) -> bool {
         !self.termination_reasons().is_empty()
     }
-    fn result(&self) -> (Vec<f64>, f64, usize, usize, usize, Vec<f64>, Vec<f64>) {
+    pub fn result(&self) -> (Vec<f64>, f64, usize, usize, usize, Vec<f64>, Vec<f64>) {
         let xbest = if self.best.initialized {
             self.best.x.clone()
         } else {
@@ -858,6 +860,7 @@ impl CmaesState {
     }
 }
 
+#[cfg(feature = "python")]
 fn parse_covariance_mode(mode: Option<&str>) -> PyResult<CovarianceModeKind> {
     match mode {
         None => Ok(CovarianceModeKind::Full),
@@ -875,11 +878,13 @@ fn parse_covariance_mode(mode: Option<&str>) -> PyResult<CovarianceModeKind> {
     }
 }
 
+#[cfg(feature = "python")]
 #[pyclass(name = "CMAES")]
 struct PyCmaes {
     inner: CmaesState,
 }
 
+#[cfg(feature = "python")]
 #[pymethods]
 impl PyCmaes {
     #[new]
@@ -946,9 +951,11 @@ impl PyCmaes {
     }
 }
 
+#[cfg(feature = "python")]
 #[pyclass(name = "ff")]
 struct PyFF;
 
+#[cfg(feature = "python")]
 #[pymethods]
 impl PyFF {
     #[staticmethod]
@@ -999,6 +1006,7 @@ impl PyFF {
     }
 }
 
+#[cfg(feature = "python")]
 #[pyfunction]
 #[pyo3(
     signature = (objective_fct, xstart, sigma, maxfevals=None, ftarget=None, verb_disp=None, covariance_mode=None, noise=false)
@@ -1058,6 +1066,7 @@ fn fmin(
     Ok((xmin, es_py))
 }
 
+#[cfg(feature = "python")]
 #[pyfunction]
 #[pyo3(
     signature = (objective_fct, xstart, sigma, maxfevals=None, ftarget=None, verb_disp=None, covariance_mode=None, noise=false)
@@ -1209,6 +1218,7 @@ fn apply_box_constraints(x: &mut [f64], lb: Option<&[f64]>, ub: Option<&[f64]>, 
     }
 }
 
+#[cfg(feature = "python")]
 #[pyfunction]
 #[pyo3(
     signature = (objective_fct, xstart, sigma, constraints, maxfevals=None, ftarget=None, verb_disp=None, covariance_mode=None, noise=false)
@@ -1267,12 +1277,7 @@ fn fmin_constrained(
         let mut fitvals: Vec<f64> = Vec::with_capacity(x_raw.len());
         for mut x in x_raw {
             // Box projection first.
-            apply_box_constraints(
-                &mut x,
-                lb.as_deref(),
-                ub.as_deref(),
-                mirror,
-            );
+            apply_box_constraints(&mut x, lb.as_deref(), ub.as_deref(), mirror);
 
             // Rejection/resample loop.
             let mut attempts = 0;
@@ -1286,12 +1291,7 @@ fn fmin_constrained(
                     attempts += 1;
                     // draw a new sample
                     x = es.ask_one();
-                    apply_box_constraints(
-                        &mut x,
-                        lb.as_deref(),
-                        ub.as_deref(),
-                        mirror,
-                    );
+                    apply_box_constraints(&mut x, lb.as_deref(), ub.as_deref(), mirror);
                 }
             }
 
@@ -1341,6 +1341,7 @@ fn fmin_constrained(
     Ok((xmin, es_py))
 }
 
+#[cfg(feature = "python")]
 #[pyfunction]
 #[pyo3(
     signature = (objective_fct, xstart, sigma, max_total_fevals, ftarget=None, strategy=None, verb_disp=None, max_restarts=None, covariance_mode=None)
@@ -1471,8 +1472,10 @@ fn fmin_restart(
     Ok((xmin, es_py))
 }
 
-#[allow(dead_code)]
-pub(crate) fn optimize_rust<F>(
+/// Minimize an objective function from pure Rust (no Python involved).
+///
+/// Returns the best solution vector and the final optimizer state.
+pub fn optimize_rust<F>(
     xstart: Vec<f64>,
     sigma: f64,
     popsize: Option<usize>,
@@ -1785,6 +1788,7 @@ pub mod test_utils {
     }
 }
 
+#[cfg(feature = "python")]
 #[pymodule]
 fn fastcma(py: Python<'_>, m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyCmaes>()?;

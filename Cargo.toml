@@ -5,10 +5,10 @@ edition = "2021"
 
 [lib]
 name = "fastcma"
-crate-type = ["cdylib", "rlib"]
+crate-type = ["rlib"]
 
 [dependencies]
-pyo3 = { version = "0.22", features = ["extension-module"] }
+pyo3 = { version = "0.22", features = ["extension-module"], optional = true }
 rand = "0.8"
 rand_distr = "0.4"
 rand_chacha = "0.3"
@@ -18,10 +18,11 @@ nalgebra-lapack = { version = "0.22", optional = true }
 numpy = { version = "0.22", optional = true }
 
 [features]
-default = ["eigen_rust"]
+default = ["eigen_rust", "python"]
 eigen_rust = []
 eigen_lapack = ["nalgebra-lapack"]
 numpy_support = ["numpy"]
+python = ["dep:pyo3"]
 test_utils = []
 
 [dev-dependencies]
