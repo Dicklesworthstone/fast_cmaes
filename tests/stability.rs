@@ -1,5 +1,5 @@
-use fastcma::test_utils::{run_seeded_mode, run_seeded_mode_noise};
 use fastcma::CovarianceModeKind;
+use fastcma::test_utils::{run_seeded_mode, run_seeded_mode_noise};
 use std::time::Instant;
 
 fn ill_cond_ellipsoid(x: &[f64]) -> f64 {

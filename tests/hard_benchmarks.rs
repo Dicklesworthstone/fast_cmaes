@@ -1,5 +1,5 @@
-use fastcma::test_utils::run_seeded_mode;
 use fastcma::CovarianceModeKind;
+use fastcma::test_utils::run_seeded_mode;
 
 fn zakharov(x: &[f64]) -> f64 {
     let sum1: f64 = x.iter().map(|v| v * v).sum();

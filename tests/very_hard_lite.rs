@@ -1,5 +1,5 @@
-use fastcma::test_utils::run_seeded_mode;
 use fastcma::CovarianceModeKind;
+use fastcma::test_utils::run_seeded_mode;
 
 fn rastrigin(x: &[f64]) -> f64 {
     let n = x.len() as f64;

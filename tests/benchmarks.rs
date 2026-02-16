@@ -1,8 +1,8 @@
 use fastcma::test_utils::{
     run_ipop_bipop_parallel, run_multiseed, run_seeded, run_seeded_mode, run_seeded_mode_noise,
 };
-use fastcma::{test_utils::augmented_lagrangian_penalty_raw, CovarianceModeKind};
-use rand::{rngs::StdRng, Rng, SeedableRng};
+use fastcma::{CovarianceModeKind, test_utils::augmented_lagrangian_penalty_raw};
+use rand::{Rng, SeedableRng, rngs::StdRng};
 use rand_distr::StandardNormal;
 use std::cell::RefCell;
 use std::time::Instant;
