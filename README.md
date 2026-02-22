@@ -8,7 +8,7 @@
 [![PyPI](https://img.shields.io/pypi/v/fast-cmaes?label=PyPI&logo=pypi&logoColor=white&style=for-the-badge&color=3776ab)](https://pypi.org/project/fast-cmaes/)
 [![Python](https://img.shields.io/badge/Python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12-3776ab?logo=python&logoColor=white&style=for-the-badge)](https://www.python.org/)
 [![Rust](https://img.shields.io/badge/Rust-nightly-ce412b?logo=rust&logoColor=white&style=for-the-badge)](https://www.rust-lang.org/)
-[![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
+[![License](https://img.shields.io/badge/License-MIT%2BOpenAI%2FAnthropic%20Rider-blue.svg?style=for-the-badge)](LICENSE)
 
 ---
 
@@ -1195,4 +1195,4 @@ flowchart TD
 
 ## 📄 License
 
-**MIT** (c) 2025 Jeffrey Emanuel
+MIT License (with OpenAI/Anthropic Rider). (c) 2025 Jeffrey Emanuel
