@@ -4,7 +4,6 @@
 
 **Hyper-optimized CMA-ES in Rust with a first-class Python experience**
 
-[![CI](https://img.shields.io/github/actions/workflow/status/Dicklesworthstone/fast_cmaes/build-wheels.yml?branch=main&label=CI&logo=github&style=for-the-badge)](https://github.com/Dicklesworthstone/fast_cmaes/actions/workflows/build-wheels.yml)
 [![PyPI](https://img.shields.io/pypi/v/fast-cmaes?label=PyPI&logo=pypi&logoColor=white&style=for-the-badge&color=3776ab)](https://pypi.org/project/fast-cmaes/)
 [![Python](https://img.shields.io/badge/Python-3.9%20%7C%203.10%20%7C%203.11%20%7C%203.12-3776ab?logo=python&logoColor=white&style=for-the-badge)](https://www.python.org/)
 [![Rust](https://img.shields.io/badge/Rust-nightly-ce412b?logo=rust&logoColor=white&style=for-the-badge)](https://www.rust-lang.org/)
