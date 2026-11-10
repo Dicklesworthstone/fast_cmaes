@@ -5,6 +5,15 @@ def sphere_vec(xs):
     return [sum(v * v for v in x) for x in xs]
 
 
+def test_package_reexports_every_native_name():
+    import fastcma
+    from fastcma import fastcma as native
+
+    public = {name for name in dir(native) if not name.startswith("_")}
+    assert public <= set(fastcma.__all__)
+    assert all(getattr(fastcma, name) is getattr(native, name) for name in public)
+
+
 def test_fmin_roundtrip_basic():
     from fastcma import fmin
 
