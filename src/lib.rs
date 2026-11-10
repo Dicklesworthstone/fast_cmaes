@@ -11,7 +11,6 @@ use rand::SeedableRng;
 use rand_distr::StandardNormal;
 use rayon::prelude::*;
 use std::cmp::Ordering;
-use std::f64;
 
 pub mod ffi;
 
