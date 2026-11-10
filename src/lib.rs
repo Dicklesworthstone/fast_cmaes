@@ -523,12 +523,30 @@ pub struct CmaesState {
     pending_fitvals: Vec<f64>,
 }
 
-#[derive(Clone, Copy)]
-struct NoiseConfig {
-    threshold_rel: f64,
-    sigma_expand: f64,
-    max_sigma_factor: f64,
-    cooldown_iters: usize,
+/// Noise-aware step-size control, enabled with [`CmaesState::with_noise`].
+///
+/// After each `tell`, if the spread between the best and the median fitness
+/// (relative to `max(|best|, 1)`) falls below `threshold_rel`, sigma grows by
+/// `sigma_expand`, capped at `max_sigma_factor` times the initial sigma, and the
+/// check then sleeps for `cooldown_iters` generations.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct NoiseConfig {
+    pub threshold_rel: f64,
+    pub sigma_expand: f64,
+    pub max_sigma_factor: f64,
+    pub cooldown_iters: usize,
+}
+
+impl Default for NoiseConfig {
+    /// The settings the Python API uses for `noise=True`.
+    fn default() -> Self {
+        Self {
+            threshold_rel: 1e-3,
+            sigma_expand: 1.6,
+            max_sigma_factor: 5.0,
+            cooldown_iters: 5,
+        }
+    }
 }
 
 impl CmaesState {
@@ -598,7 +616,9 @@ impl CmaesState {
         state
     }
 
-    fn with_noise(mut self, cfg: NoiseConfig) -> Self {
+    /// Enable noise-aware step-size control (see [`NoiseConfig`]).
+    #[must_use]
+    pub fn with_noise(mut self, cfg: NoiseConfig) -> Self {
         self.noise_cfg = Some(cfg);
         self
     }
@@ -1021,12 +1041,7 @@ fn fmin(
     let mode = parse_covariance_mode(covariance_mode)?;
     let mut es = CmaesState::new(xstart, sigma, None, ftarget, maxfevals, mode);
     if noise {
-        es = es.with_noise(NoiseConfig {
-            threshold_rel: 1e-3,
-            sigma_expand: 1.6,
-            max_sigma_factor: 5.0,
-            cooldown_iters: 5,
-        });
+        es = es.with_noise(NoiseConfig::default());
     }
     let disp_mod = verb_disp.unwrap_or(100);
     loop {
@@ -1082,12 +1097,7 @@ fn fmin_vec(
     let mode = parse_covariance_mode(covariance_mode)?;
     let mut es = CmaesState::new(xstart, sigma, None, ftarget, maxfevals, mode);
     if noise {
-        es = es.with_noise(NoiseConfig {
-            threshold_rel: 1e-3,
-            sigma_expand: 1.6,
-            max_sigma_factor: 5.0,
-            cooldown_iters: 5,
-        });
+        es = es.with_noise(NoiseConfig::default());
     }
     let disp_mod = verb_disp.unwrap_or(100);
     loop {
@@ -1240,12 +1250,7 @@ fn fmin_constrained(
     let mode = parse_covariance_mode(covariance_mode)?;
     let mut es = CmaesState::new(xstart, sigma, None, ftarget, maxfevals, mode);
     if noise {
-        es = es.with_noise(NoiseConfig {
-            threshold_rel: 1e-3,
-            sigma_expand: 1.6,
-            max_sigma_factor: 5.0,
-            cooldown_iters: 5,
-        });
+        es = es.with_noise(NoiseConfig::default());
     }
     let disp_mod = verb_disp.unwrap_or(100);
 
@@ -1568,12 +1573,7 @@ pub mod test_utils {
         covariance_mode: CovarianceModeKind,
         objective: impl Fn(&[f64]) -> f64,
     ) -> f64 {
-        let cfg = NoiseConfig {
-            threshold_rel: 1e-3,
-            sigma_expand: 1.6,
-            max_sigma_factor: 5.0,
-            cooldown_iters: 5,
-        };
+        let cfg = NoiseConfig::default();
         let mut es = CmaesState::new_with_seed(
             x0,
             sigma,

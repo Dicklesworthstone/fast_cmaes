@@ -5,10 +5,13 @@ edition = "2021"
 
 [lib]
 name = "fastcma"
-crate-type = ["rlib"]
+# cdylib: the C ABI in src/ffi.rs (include/fastcma.h); rlib: Rust dependents.
+crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-pyo3 = { version = "0.30", features = ["extension-module"], optional = true }
+# extension-module comes from maturin (pyproject.toml), so plain cargo builds of the
+# cdylib and the test binaries link libpython instead of leaving its symbols undefined.
+pyo3 = { version = "0.30", optional = true }
 rand = "0.8"
 rand_distr = "0.4"
 rand_chacha = "0.3"
@@ -26,7 +29,7 @@ python = ["dep:pyo3"]
 test_utils = []
 
 [dev-dependencies]
-fastcma = { path = ".", features = ["test_utils"] }
+fastcma = { path = ".", default-features = false, features = ["test_utils"] }
 
 [profile.release]
 opt-level = 3

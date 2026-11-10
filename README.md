@@ -627,8 +627,14 @@ Lightweight ABI for embedding is in `include/fastcma.h` and `include/fastcma.hpp
 ### Build the Shared Library
 
 ```bash
+# C/C++ only, no Python dependency:
+cargo build --release --no-default-features --features eigen_rust
+
+# Or with the default features, which also link libpython:
 cargo build --release
 ```
+
+This produces `target/release/libfastcma.so` (Linux), `libfastcma.dylib` (macOS) or `fastcma.dll` (Windows).
 
 ### Use from C
 
@@ -645,17 +651,19 @@ int main() {
 
 ### Compile & Run
 
-Compile (adjust path/extension per platform) — link against Python because the library is built with PyO3:
+Compile (adjust the path per platform). Neither build needs extra link flags: the default build's library already links libpython itself.
 
 ```bash
-gcc demo.c -I include -L target/release -lfastcma $(python3-config --embed --ldflags)
+gcc demo.c -I include -L target/release -lfastcma
 ```
 
-Run (ensure the library path is visible):
+Run (ensure the library path is visible; `DYLD_LIBRARY_PATH` on macOS):
 
 ```bash
 LD_LIBRARY_PATH=target/release ./a.out
 ```
+
+`tests/ffi_smoke/demo.c` is the same program as a pass/fail check (exit 0).
 
 ## 🌐 REST API Example
 
