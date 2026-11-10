@@ -8,14 +8,14 @@ name = "fastcma"
 crate-type = ["rlib"]
 
 [dependencies]
-pyo3 = { version = "0.22", features = ["extension-module"], optional = true }
+pyo3 = { version = "0.30", features = ["extension-module"], optional = true }
 rand = "0.8"
 rand_distr = "0.4"
 rand_chacha = "0.3"
 rayon = "1.10"
 nalgebra = "0.31"
 nalgebra-lapack = { version = "0.22", optional = true }
-numpy = { version = "0.22", optional = true }
+numpy = { version = "0.30", optional = true }
 
 [features]
 default = ["eigen_rust", "python"]

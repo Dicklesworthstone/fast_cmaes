@@ -909,41 +909,31 @@ impl PyCmaes {
         Ok(Self { inner })
     }
     fn ask(&mut self, py: Python<'_>) -> PyResult<Vec<Vec<f64>>> {
-        let candidates = py.allow_threads(|| self.inner.ask());
+        let candidates = py.detach(|| self.inner.ask());
         Ok(candidates)
     }
     fn ask_one(&mut self, py: Python<'_>) -> PyResult<Vec<f64>> {
-        let x = py.allow_threads(|| self.inner.ask_one());
+        let x = py.detach(|| self.inner.ask_one());
         Ok(x)
     }
     fn tell(&mut self, py: Python<'_>, arx: Vec<Vec<f64>>, fitvals: Vec<f64>) {
-        py.allow_threads(|| self.inner.tell(arx, fitvals));
+        py.detach(|| self.inner.tell(arx, fitvals));
     }
     fn tell_one(&mut self, py: Python<'_>, x: Vec<f64>, f: f64) {
-        py.allow_threads(|| self.inner.tell_one(x, f));
+        py.detach(|| self.inner.tell_one(x, f));
     }
-    fn stop<'py>(&self, py: Python<'py>) -> Bound<'py, PyDict> {
-        let d = PyDict::new_bound(py);
+    fn stop<'py>(&self, py: Python<'py>) -> PyResult<Bound<'py, PyDict>> {
+        let d = PyDict::new(py);
         for r in self.inner.termination_reasons() {
             match r {
-                TerminationReason::MaxFevals(v) => {
-                    let _ = d.set_item("maxfevals", v);
-                }
-                TerminationReason::FTarget(v) => {
-                    let _ = d.set_item("ftarget", v);
-                }
-                TerminationReason::Condition(v) => {
-                    let _ = d.set_item("condition", v);
-                }
-                TerminationReason::TolFun(v) => {
-                    let _ = d.set_item("tolfun", v);
-                }
-                TerminationReason::TolX(v) => {
-                    let _ = d.set_item("tolx", v);
-                }
+                TerminationReason::MaxFevals(v) => d.set_item("maxfevals", v)?,
+                TerminationReason::FTarget(v) => d.set_item("ftarget", v)?,
+                TerminationReason::Condition(v) => d.set_item("condition", v)?,
+                TerminationReason::TolFun(v) => d.set_item("tolfun", v)?,
+                TerminationReason::TolX(v) => d.set_item("tolx", v)?,
             }
         }
-        d
+        Ok(d)
     }
     #[getter]
     fn result(&self) -> (Vec<f64>, f64, usize, usize, usize, Vec<f64>, Vec<f64>) {
@@ -952,7 +942,7 @@ impl PyCmaes {
     #[pyo3(signature = (verb_modulo=None))]
     fn disp(&self, py: Python<'_>, verb_modulo: Option<usize>) {
         let v = verb_modulo.unwrap_or(1);
-        py.allow_threads(|| self.inner.disp(v));
+        py.detach(|| self.inner.disp(v));
     }
 }
 
@@ -1019,7 +1009,7 @@ impl PyFF {
 #[allow(clippy::too_many_arguments)]
 fn fmin(
     py: Python<'_>,
-    objective_fct: PyObject,
+    objective_fct: Py<PyAny>,
     xstart: Vec<f64>,
     sigma: f64,
     maxfevals: Option<usize>,
@@ -1043,22 +1033,22 @@ fn fmin(
         if es.has_terminated() {
             break;
         }
-        let x_candidates = py.allow_threads(|| es.ask());
+        let x_candidates = py.detach(|| es.ask());
         let mut fitvals: Vec<f64> = Vec::with_capacity(x_candidates.len());
         for x in &x_candidates {
-            let x_py = PyList::new_bound(py, x);
+            let x_py = PyList::new(py, x)?;
             let val = objective_fct.call1(py, (x_py,))?;
             let f: f64 = val.extract(py)?;
             fitvals.push(f);
         }
-        py.allow_threads(|| es.tell(x_candidates, fitvals));
+        py.detach(|| es.tell(x_candidates, fitvals));
         if disp_mod > 0 {
-            py.allow_threads(|| es.disp(disp_mod));
+            py.detach(|| es.disp(disp_mod));
         }
     }
     let (xbest, fbest, _evals_best, _counteval, _iters, xmean, _stds) = es.result();
     let xmean_val = {
-        let x_py = PyList::new_bound(py, &xmean);
+        let x_py = PyList::new(py, &xmean)?;
         let val = objective_fct.call1(py, (x_py,))?;
         let f: f64 = val.extract(py)?;
         f
@@ -1080,7 +1070,7 @@ fn fmin(
 #[allow(clippy::too_many_arguments)]
 fn fmin_vec(
     py: Python<'_>,
-    objective_fct: PyObject,
+    objective_fct: Py<PyAny>,
     xstart: Vec<f64>,
     sigma: f64,
     maxfevals: Option<usize>,
@@ -1104,11 +1094,11 @@ fn fmin_vec(
         if es.has_terminated() {
             break;
         }
-        let x_candidates = py.allow_threads(|| es.ask());
+        let x_candidates = py.detach(|| es.ask());
         let x_py = {
-            let list = PyList::empty_bound(py);
+            let list = PyList::empty(py);
             for x in &x_candidates {
-                let row = PyList::new_bound(py, x);
+                let row = PyList::new(py, x)?;
                 list.append(row)?;
             }
             list
@@ -1119,8 +1109,8 @@ fn fmin_vec(
             #[cfg(feature = "numpy_support")]
             {
                 if let Ok(arr) = fit_py.extract::<PyReadonlyArray1<f64>>(py) {
-                    let slice = arr.as_slice()?;
-                    slice.to_vec()
+                    // Any stride: a view such as fit[::2] is as valid a result as a fresh array.
+                    arr.as_array().to_vec()
                 } else {
                     fit_py.extract::<Vec<f64>>(py)?
                 }
@@ -1136,20 +1126,23 @@ fn fmin_vec(
                 "vectorized objective must return len(X) fitness values",
             ));
         }
-        py.allow_threads(|| es.tell(x_candidates, fitvals));
+        py.detach(|| es.tell(x_candidates, fitvals));
         if disp_mod > 0 {
-            py.allow_threads(|| es.disp(disp_mod));
+            py.detach(|| es.disp(disp_mod));
         }
     }
     let (xbest, fbest, _evals_best, _counteval, _iters, xmean, _stds) = es.result();
     let xmean_val = {
-        let x_py = PyList::new_bound(py, std::slice::from_ref(&xmean));
+        let x_py = PyList::new(py, std::slice::from_ref(&xmean))?;
         let fit_py = objective_fct.call1(py, (x_py,))?;
         let vals: Vec<f64> = fit_py.extract(py)?;
-        if vals.is_empty() {
-            f64::INFINITY
-        } else {
-            vals[0]
+        match vals.as_slice() {
+            [f] => *f,
+            _ => {
+                return Err(PyErr::new::<pyo3::exceptions::PyValueError, _>(
+                    "vectorized objective must return len(X) fitness values",
+                ))
+            }
         }
     };
     let xmin = if fbest < xmean_val {
@@ -1234,7 +1227,7 @@ fn apply_box_constraints(x: &mut [f64], lb: Option<&[f64]>, ub: Option<&[f64]>, 
 #[allow(clippy::too_many_arguments)]
 fn fmin_constrained(
     py: Python<'_>,
-    objective_fct: PyObject,
+    objective_fct: Py<PyAny>,
     xstart: Vec<f64>,
     sigma: f64,
     constraints: Bound<'_, PyDict>,
@@ -1272,15 +1265,15 @@ fn fmin_constrained(
         .get_item("max_resamples")?
         .and_then(|v| v.extract().ok())
         .unwrap_or(3);
-    let reject_fn: Option<PyObject> = constraints.get_item("reject")?.map(|v| v.into_py(py));
-    let repair_fn: Option<PyObject> = constraints.get_item("repair")?.map(|v| v.into_py(py));
-    let penalty_fn: Option<PyObject> = constraints.get_item("penalty")?.map(|v| v.into_py(py));
+    let reject_fn: Option<Py<PyAny>> = constraints.get_item("reject")?.map(Bound::unbind);
+    let repair_fn: Option<Py<PyAny>> = constraints.get_item("repair")?.map(Bound::unbind);
+    let penalty_fn: Option<Py<PyAny>> = constraints.get_item("penalty")?.map(Bound::unbind);
 
     loop {
         if es.has_terminated() {
             break;
         }
-        let x_raw = py.allow_threads(|| es.ask());
+        let x_raw = py.detach(|| es.ask());
         let mut x_eval: Vec<Vec<f64>> = Vec::with_capacity(x_raw.len());
         let mut fitvals: Vec<f64> = Vec::with_capacity(x_raw.len());
         for mut x in x_raw {
@@ -1291,7 +1284,7 @@ fn fmin_constrained(
             let mut attempts = 0;
             if let Some(ref reject) = reject_fn {
                 while attempts < max_resamples {
-                    let row = PyList::new_bound(py, &x);
+                    let row = PyList::new(py, &x)?;
                     let feasible: bool = reject.call1(py, (row,))?.extract(py)?;
                     if feasible {
                         break;
@@ -1304,22 +1297,22 @@ fn fmin_constrained(
             }
 
             if let Some(ref repair) = repair_fn {
-                let row = PyList::new_bound(py, &x);
+                let row = PyList::new(py, &x)?;
                 let repaired = repair.call1(py, (row,))?;
                 let new_x: Vec<f64> = repaired.extract(py)?;
                 x = new_x;
             }
-            let row = PyList::new_bound(py, &x);
+            let row = PyList::new(py, &x)?;
             let val = objective_fct.call1(py, (row,))?;
             let mut f: f64 = val.extract(py)?;
             if let Some(ref pen) = penalty_fn {
-                let row2 = PyList::new_bound(py, &x);
+                let row2 = PyList::new(py, &x)?;
                 let pval = pen.call1(py, (row2,))?;
                 let p: f64 = pval.extract(py)?;
                 f += p;
             } else if let Some(ref reject) = reject_fn {
                 // If still infeasible and no penalty provided, assign a large penalty.
-                let row = PyList::new_bound(py, &x);
+                let row = PyList::new(py, &x)?;
                 let feasible: bool = reject.call1(py, (row,))?.extract(py)?;
                 if !feasible {
                     f += 1e6;
@@ -1328,14 +1321,14 @@ fn fmin_constrained(
             x_eval.push(x);
             fitvals.push(f);
         }
-        py.allow_threads(|| es.tell(x_eval, fitvals));
+        py.detach(|| es.tell(x_eval, fitvals));
         if disp_mod > 0 {
-            py.allow_threads(|| es.disp(disp_mod));
+            py.detach(|| es.disp(disp_mod));
         }
     }
     let (xbest, fbest, _evals_best, _counteval, _iters, xmean, _stds) = es.result();
     let xmean_val = {
-        let row = PyList::new_bound(py, &xmean);
+        let row = PyList::new(py, &xmean)?;
         let val = objective_fct.call1(py, (row,))?;
         let f: f64 = val.extract(py)?;
         f
@@ -1357,7 +1350,7 @@ fn fmin_constrained(
 #[allow(clippy::too_many_arguments)]
 fn fmin_restart(
     py: Python<'_>,
-    objective_fct: PyObject,
+    objective_fct: Py<PyAny>,
     xstart: Vec<f64>,
     sigma: f64,
     max_total_fevals: usize,
@@ -1430,17 +1423,17 @@ fn fmin_restart(
             if es.has_terminated() {
                 break;
             }
-            let x_candidates = py.allow_threads(|| es.ask());
+            let x_candidates = py.detach(|| es.ask());
             let mut fitvals: Vec<f64> = Vec::with_capacity(x_candidates.len());
             for x in &x_candidates {
-                let row = PyList::new_bound(py, x);
+                let row = PyList::new(py, x)?;
                 let val = objective_fct.call1(py, (row,))?;
                 let f: f64 = val.extract(py)?;
                 fitvals.push(f);
             }
-            py.allow_threads(|| es.tell(x_candidates, fitvals));
+            py.detach(|| es.tell(x_candidates, fitvals));
             if disp_mod > 0 {
-                py.allow_threads(|| es.disp(disp_mod));
+                py.detach(|| es.disp(disp_mod));
             }
             if es.counteval + total_evals >= max_total_fevals {
                 break;
