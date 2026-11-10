@@ -38,11 +38,7 @@ fn dixon_price(x: &[f64]) -> f64 {
 
 fn powell(x: &[f64]) -> f64 {
     let mut s = 0.0;
-    for chunk in x.chunks_exact(4) {
-        let x1 = chunk[0];
-        let x2 = chunk[1];
-        let x3 = chunk[2];
-        let x4 = chunk[3];
+    for &[x1, x2, x3, x4] in x.as_chunks::<4>().0 {
         s += (x1 + 10.0 * x2).powi(2);
         s += 5.0 * (x3 - x4).powi(2);
         s += (x2 - 2.0 * x3).powi(4);
@@ -215,14 +211,14 @@ fn weierstrass(x: &[f64]) -> f64 {
     for &xi in x {
         for k in 0..=kmax {
             let ak = a.powi(k);
-            let bk = b.powi(k as i32);
+            let bk = b.powi(k);
             sum1 += ak * (2.0 * std::f64::consts::PI * bk * (xi + 0.5)).cos();
         }
     }
     let mut sum2 = 0.0;
     for k in 0..=kmax {
         let ak = a.powi(k);
-        let bk = b.powi(k as i32);
+        let bk = b.powi(k);
         sum2 += ak * (2.0 * std::f64::consts::PI * bk * 0.5).cos();
     }
     sum1 - (x.len() as f64) * sum2
