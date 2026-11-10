@@ -1016,6 +1016,7 @@ impl PyFF {
 #[pyo3(
     signature = (objective_fct, xstart, sigma, maxfevals=None, ftarget=None, verb_disp=None, covariance_mode=None, noise=false)
 )]
+#[allow(clippy::too_many_arguments)]
 fn fmin(
     py: Python<'_>,
     objective_fct: PyObject,
@@ -1076,6 +1077,7 @@ fn fmin(
 #[pyo3(
     signature = (objective_fct, xstart, sigma, maxfevals=None, ftarget=None, verb_disp=None, covariance_mode=None, noise=false)
 )]
+#[allow(clippy::too_many_arguments)]
 fn fmin_vec(
     py: Python<'_>,
     objective_fct: PyObject,
@@ -1203,22 +1205,22 @@ fn apply_box_constraints(x: &mut [f64], lb: Option<&[f64]>, ub: Option<&[f64]>, 
     }
 
     // Mirror path (scalar but robust): reflect into [lb, ub] using modulo when width > 0.
-    for i in 0..n {
+    for (i, xi) in x.iter_mut().enumerate() {
         let lo = lb.and_then(|l| l.get(i));
         let hi = ub.and_then(|u| u.get(i));
         match (lo, hi) {
             (Some(&l), Some(&u)) if u > l => {
                 let width = u - l;
-                let delta = x[i] - l;
+                let delta = *xi - l;
                 let wrapped = (delta.rem_euclid(2.0 * width)).abs();
-                x[i] = if wrapped <= width {
+                *xi = if wrapped <= width {
                     l + wrapped
                 } else {
                     u - (wrapped - width)
                 };
             }
-            (Some(&l), _) if x[i] < l => x[i] = l + (l - x[i]).abs(),
-            (_, Some(&u)) if x[i] > u => x[i] = u - (x[i] - u).abs(),
+            (Some(&l), _) if *xi < l => *xi = l + (l - *xi).abs(),
+            (_, Some(&u)) if *xi > u => *xi = u - (*xi - u).abs(),
             _ => {}
         }
     }
@@ -1352,6 +1354,7 @@ fn fmin_constrained(
 #[pyo3(
     signature = (objective_fct, xstart, sigma, max_total_fevals, ftarget=None, strategy=None, verb_disp=None, max_restarts=None, covariance_mode=None)
 )]
+#[allow(clippy::too_many_arguments)]
 fn fmin_restart(
     py: Python<'_>,
     objective_fct: PyObject,
@@ -1628,6 +1631,7 @@ pub mod test_utils {
     }
 
     /// Simple restart helper: perturb the start point between runs with Gaussian noise.
+    #[allow(clippy::too_many_arguments)]
     pub fn run_with_restarts(
         x0: Vec<f64>,
         sigma: f64,
@@ -1670,6 +1674,7 @@ pub mod test_utils {
     /// Parallel-population restarts (IPOP/BIPOP) with adaptive lambda.
     /// Maintains multiple CMA-ES populations concurrently and shares a global
     /// evaluation budget. Returns the best objective value found.
+    #[allow(clippy::too_many_arguments)]
     pub fn run_ipop_bipop_parallel(
         x0: Vec<f64>,
         sigma: f64,
@@ -1702,7 +1707,7 @@ pub mod test_utils {
 
         while remaining > 0 && (!pops.is_empty() || next_restart < max_restarts) {
             while pops.len() < max_parallel && next_restart < max_restarts {
-                let lam = if next_restart % 2 == 0 {
+                let lam = if next_restart.is_multiple_of(2) {
                     // IPOP branch grows lambda geometrically.
                     base_lam * (1usize << (next_restart / 2))
                 } else {
